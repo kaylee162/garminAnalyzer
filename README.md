@@ -41,12 +41,37 @@ npm install
 npm run dev:web
 ```
 
-The home page shows whether the web app can reach the API and database.
+The home page shows whether the web app can reach the API and database, a **Sync now** button, and your recent runs.
+
+## Connect Garmin
+
+Your Garmin login stays on your computer. It goes in `backend/.env`, which git ignores.
+
+1. Copy the example settings file and fill in your Garmin Connect email and password.
+
+   Windows PowerShell:
+   ```powershell
+   cd backend
+   Copy-Item .env.example .env
+   notepad .env
+   ```
+   macOS / Linux: `cp .env.example .env` and edit it.
+
+2. Run the first sync from a terminal. It back-fills your whole history (this can take a few minutes) and asks for a two-factor code if your Garmin account uses one:
+   ```sh
+   uv run alembic upgrade head
+   uv run python -m app.sync
+   ```
+
+After the first login the app saves login tokens in `backend/data/garmin_tokens/` and reuses them, so you can remove the password from `.env` if you like. From then on the **Sync now** button in the web app fetches new activities. `uv run python -m app.sync --full` re-fetches everything.
+
+The sync uses the unofficial [garminconnect](https://github.com/cyberjunky/python-garminconnect) library. If Garmin changes its login, only `backend/app/sync/garmin.py` needs to change.
 
 ## Common tasks
 
 | Task | Command |
 |---|---|
+| Sync from Garmin | `cd backend && uv run python -m app.sync` |
 | Backend tests | `cd backend && uv run pytest` |
 | Lint / format Python | `cd backend && uv run ruff check . && uv run ruff format .` |
 | New migration after changing models | `cd backend && uv run alembic revision --autogenerate -m "what changed"` |
