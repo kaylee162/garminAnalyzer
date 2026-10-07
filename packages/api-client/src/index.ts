@@ -1,0 +1,12 @@
+import createClient from "openapi-fetch";
+import type { components, paths } from "./schema";
+
+export type Schemas = components["schemas"];
+export type Health = Schemas["Health"];
+
+/** Create a typed API client. Every path, parameter and response is checked against the backend's OpenAPI spec. */
+export function createApiClient(baseUrl: string) {
+  return createClient<paths>({ baseUrl });
+}
+
+export type ApiClient = ReturnType<typeof createApiClient>;
