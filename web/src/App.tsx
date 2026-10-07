@@ -1,15 +1,26 @@
+import { useState } from "react";
 import { useHealth } from "./api/health";
 import { RecentRuns } from "./components/RecentRuns";
+import { RunComparison } from "./components/RunComparison";
 import { SyncPanel } from "./components/SyncPanel";
 
 export function App() {
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // Keep at most two runs picked: ticking a third replaces the one picked first.
+  const toggleRun = (id: number) =>
+    setSelectedIds((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id].slice(-2),
+    );
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 text-slate-900">
       <h1 className="text-2xl font-semibold">Garmin Analyzer</h1>
       <p className="mt-1 text-slate-600">Trends and training plans from your Garmin runs.</p>
       <ApiStatus />
       <SyncPanel />
-      <RecentRuns />
+      <RecentRuns selectedIds={selectedIds} onToggle={toggleRun} />
+      <RunComparison selectedIds={selectedIds} onClear={() => setSelectedIds([])} />
     </main>
   );
 }

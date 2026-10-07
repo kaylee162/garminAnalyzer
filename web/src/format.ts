@@ -32,3 +32,9 @@ export function formatDateTime(iso: string): string {
     minute: "2-digit",
   });
 }
+
+export function formatPercent(percent: number | null | undefined): string {
+  if (percent == null) return "–";
+  const sign = percent > 0 ? "+" : percent < 0 ? "−" : "";
+  return `${sign}${Math.abs(percent).toFixed(1)}%`;
+}

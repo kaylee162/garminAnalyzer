@@ -5,6 +5,8 @@ export type Schemas = components["schemas"];
 export type Health = Schemas["Health"];
 export type ActivitySummary = Schemas["ActivitySummary"];
 export type ActivityPage = Schemas["ActivityPage"];
+export type ActivityComparison = Schemas["ActivityComparison"];
+export type MetricComparison = Schemas["MetricComparison"];
 export type SyncStatus = Schemas["SyncStatus"];
 export type SyncResult = Schemas["SyncResultOut"];
 

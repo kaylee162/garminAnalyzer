@@ -104,6 +104,62 @@
         }
       }
     },
+    "/activities/compare": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Compare",
+        "description": "Compare two activities. Pass them in either order; the earlier one is the baseline.",
+        "operationId": "compareActivities",
+        "parameters": [
+          {
+            "name": "a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id of one activity",
+              "title": "A"
+            },
+            "description": "Id of one activity"
+          },
+          {
+            "name": "b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id of the other activity",
+              "title": "B"
+            },
+            "description": "Id of the other activity"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityComparison"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/activities/{activity_id}": {
       "get": {
         "tags": [
@@ -202,6 +258,36 @@
   },
   "components": {
     "schemas": {
+      "ActivityComparison": {
+        "properties": {
+          "earlier": {
+            "$ref": "#/components/schemas/ActivitySummary"
+          },
+          "later": {
+            "$ref": "#/components/schemas/ActivitySummary"
+          },
+          "days_between": {
+            "type": "number",
+            "title": "Days Between"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricComparison"
+            },
+            "type": "array",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "earlier",
+          "later",
+          "days_between",
+          "metrics"
+        ],
+        "title": "ActivityComparison",
+        "description": "Two runs side by side. The runs are put in date order and changes run earlier -> later."
+      },
       "ActivityPage": {
         "properties": {
           "items": {
@@ -478,6 +564,122 @@
           "version"
         ],
         "title": "Health"
+      },
+      "MetricComparison": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "earlier": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earlier"
+          },
+          "later": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Later"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change"
+          },
+          "percent_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Change"
+          },
+          "better": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "higher",
+                  "lower"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Better"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "improved",
+                  "declined",
+                  "unchanged"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "earlier",
+          "later",
+          "change",
+          "percent_change",
+          "better",
+          "verdict",
+          "summary"
+        ],
+        "title": "MetricComparison"
       },
       "SyncResultOut": {
         "properties": {
