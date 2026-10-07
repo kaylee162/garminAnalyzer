@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.analytics.compare import MetricComparison, compare_activities
 from app.db import get_db
 from app.models import Activity
 from app.sync.service import get_default_user
@@ -85,9 +86,40 @@ def list_activities(
     return ActivityPage(items=[ActivitySummary.from_activity(a) for a in rows], total=total)
 
 
+class ActivityComparison(BaseModel):
+    """Two runs side by side. The runs are put in date order and changes run earlier -> later."""
+
+    earlier: ActivitySummary
+    later: ActivitySummary
+    days_between: float
+    metrics: list[MetricComparison]
+
+
+@router.get("/compare", response_model=ActivityComparison, operation_id="compareActivities")
+def compare(
+    db: Annotated[Session, Depends(get_db)],
+    a: Annotated[int, Query(description="Id of one activity")],
+    b: Annotated[int, Query(description="Id of the other activity")],
+) -> ActivityComparison:
+    """Compare two activities. Pass them in either order; the earlier one is the baseline."""
+    if a == b:
+        raise HTTPException(status_code=400, detail="Pick two different activities to compare")
+    earlier, later = sorted((_get_owned(db, a), _get_owned(db, b)), key=lambda x: x.start_time)
+    return ActivityComparison(
+        earlier=ActivitySummary.from_activity(earlier),
+        later=ActivitySummary.from_activity(later),
+        days_between=(later.start_time - earlier.start_time).total_seconds() / 86400,
+        metrics=compare_activities(earlier, later),
+    )
+
+
 @router.get("/{activity_id}", response_model=ActivitySummary, operation_id="getActivity")
 def get_activity(activity_id: int, db: Annotated[Session, Depends(get_db)]) -> ActivitySummary:
+    return ActivitySummary.from_activity(_get_owned(db, activity_id))
+
+
+def _get_owned(db: Session, activity_id: int) -> Activity:
     activity = db.get(Activity, activity_id)
     if activity is None or activity.user_id != get_default_user(db).id:
         raise HTTPException(status_code=404, detail="Activity not found")
-    return ActivitySummary.from_activity(activity)
+    return activity

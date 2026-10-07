@@ -41,6 +41,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare
+         * @description Compare two activities. Pass them in either order; the earlier one is the baseline.
+         */
+        get: operations["compareActivities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/{activity_id}": {
         parameters: {
             query?: never;
@@ -99,6 +119,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivityComparison
+         * @description Two runs side by side. The runs are put in date order and changes run earlier -> later.
+         */
+        ActivityComparison: {
+            earlier: components["schemas"]["ActivitySummary"];
+            later: components["schemas"]["ActivitySummary"];
+            /** Days Between */
+            days_between: number;
+            /** Metrics */
+            metrics: components["schemas"]["MetricComparison"][];
+        };
         /** ActivityPage */
         ActivityPage: {
             /** Items */
@@ -174,6 +206,29 @@ export interface components {
             database: "ok" | "error";
             /** Version */
             version: string;
+        };
+        /** MetricComparison */
+        MetricComparison: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Unit */
+            unit: string;
+            /** Earlier */
+            earlier: number | null;
+            /** Later */
+            later: number | null;
+            /** Change */
+            change: number | null;
+            /** Percent Change */
+            percent_change: number | null;
+            /** Better */
+            better: ("higher" | "lower") | null;
+            /** Verdict */
+            verdict: ("improved" | "declined" | "unchanged") | null;
+            /** Summary */
+            summary: string | null;
         };
         /** SyncResultOut */
         SyncResultOut: {
@@ -257,6 +312,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compareActivities: {
+        parameters: {
+            query: {
+                /** @description Id of one activity */
+                a: number;
+                /** @description Id of the other activity */
+                b: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityComparison"];
                 };
             };
             /** @description Validation Error */
