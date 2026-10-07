@@ -21,10 +21,145 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Activities
+         * @description Activities newest first, optionally only one sport.
+         */
+        get: operations["listActivities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activities/{activity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity */
+        get: operations["getActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sync Status */
+        get: operations["getSyncStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Sync
+         * @description Fetch new activities from Garmin now.
+         */
+        post: operations["runSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActivityPage */
+        ActivityPage: {
+            /** Items */
+            items: components["schemas"]["ActivitySummary"][];
+            /** Total */
+            total: number;
+        };
+        /** ActivitySummary */
+        ActivitySummary: {
+            /** Id */
+            id: number;
+            /** Garmin Id */
+            garmin_id: number;
+            /** Name */
+            name: string | null;
+            /** Sport */
+            sport: string;
+            /** Activity Type */
+            activity_type: string;
+            /**
+             * Start Time Local
+             * Format: date-time
+             */
+            start_time_local: string;
+            /** Distance Mi */
+            distance_mi: number | null;
+            /** Duration S */
+            duration_s: number | null;
+            /** Moving Time S */
+            moving_time_s: number | null;
+            /** Avg Pace S Per Mi */
+            avg_pace_s_per_mi: number | null;
+            /** Elevation Gain Ft */
+            elevation_gain_ft: number | null;
+            /** Avg Hr */
+            avg_hr: number | null;
+            /** Max Hr */
+            max_hr: number | null;
+            /** Avg Cadence */
+            avg_cadence: number | null;
+            /** Avg Power */
+            avg_power: number | null;
+            /** Avg Stride M */
+            avg_stride_m: number | null;
+            /** Aerobic Te */
+            aerobic_te: number | null;
+            /** Anaerobic Te */
+            anaerobic_te: number | null;
+            /** Calories */
+            calories: number | null;
+        };
+        /** GarminProblem */
+        GarminProblem: {
+            /** Detail */
+            detail: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** Health */
         Health: {
             /**
@@ -39,6 +174,39 @@ export interface components {
             database: "ok" | "error";
             /** Version */
             version: string;
+        };
+        /** SyncResultOut */
+        SyncResultOut: {
+            /** Added */
+            added: number;
+            /** Updated */
+            updated: number;
+            /** Total */
+            total: number;
+        };
+        /** SyncStatus */
+        SyncStatus: {
+            /** Configured */
+            configured: boolean;
+            /** Display Name */
+            display_name: string | null;
+            /** Last Sync At */
+            last_sync_at: string | null;
+            /** Activity Count */
+            activity_count: number;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -65,6 +233,119 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    listActivities: {
+        parameters: {
+            query?: {
+                sport?: ("run" | "bike" | "other") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivitySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSyncStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatus"];
+                };
+            };
+        };
+    };
+    runSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncResultOut"];
+                };
+            };
+            /** @description Garmin login or fetch failed */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GarminProblem"];
                 };
             };
         };

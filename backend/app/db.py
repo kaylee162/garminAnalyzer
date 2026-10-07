@@ -4,11 +4,15 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.config import get_settings
 
 
 def make_engine(url: str) -> Engine:
+    if url == "sqlite://":
+        # In-memory database (tests): share one connection so every thread sees the same data.
+        return create_engine(url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
     if url.startswith("sqlite:///"):
         # Make sure the folder for the SQLite file exists.
         Path(url.removeprefix("sqlite:///")).parent.mkdir(parents=True, exist_ok=True)

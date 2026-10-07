@@ -3,6 +3,10 @@ import type { components, paths } from "./schema";
 
 export type Schemas = components["schemas"];
 export type Health = Schemas["Health"];
+export type ActivitySummary = Schemas["ActivitySummary"];
+export type ActivityPage = Schemas["ActivityPage"];
+export type SyncStatus = Schemas["SyncStatus"];
+export type SyncResult = Schemas["SyncResultOut"];
 
 /** Create a typed API client. Every path, parameter and response is checked against the backend's OpenAPI spec. */
 export function createApiClient(baseUrl: string) {

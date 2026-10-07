@@ -1,11 +1,15 @@
 import { useHealth } from "./api/health";
+import { RecentRuns } from "./components/RecentRuns";
+import { SyncPanel } from "./components/SyncPanel";
 
 export function App() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-slate-900">
+    <main className="mx-auto max-w-5xl px-4 py-10 text-slate-900">
       <h1 className="text-2xl font-semibold">Garmin Analyzer</h1>
       <p className="mt-1 text-slate-600">Trends and training plans from your Garmin runs.</p>
       <ApiStatus />
+      <SyncPanel />
+      <RecentRuns />
     </main>
   );
 }
