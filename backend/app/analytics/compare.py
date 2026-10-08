@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.models import Activity
-from app.units import meters_to_feet, meters_to_miles, pace_s_per_mile
+from app.units import meters_to_feet, pace_s_per_mile
 
 # Which way counts as an improvement. None means the metric is context-dependent
 # (a longer run or a higher heart rate is neither better nor worse on its own).
@@ -66,29 +66,7 @@ def _moving_time(a: Activity) -> float | None:
     return a.moving_time_s or a.duration_s
 
 
-def _meters_per_beat(a: Activity) -> float | None:
-    """Distance covered per heartbeat: a simple aerobic-efficiency score (higher is fitter)."""
-    time_s = _moving_time(a)
-    if not a.distance_m or not time_s or not a.avg_hr:
-        return None
-    return (a.distance_m / time_s) * 60 / a.avg_hr
-
-
-def _watts_per_beat(a: Activity) -> float | None:
-    if a.avg_power is None or not a.avg_hr:
-        return None
-    return a.avg_power / a.avg_hr
-
-
 METRICS: list[Metric] = [
-    Metric("distance_mi", "Distance", "mi", lambda a: meters_to_miles(a.distance_m), digits=2),
-    Metric(
-        "moving_time_s",
-        "Moving time",
-        "s",
-        _moving_time,
-        format_amount=_format_duration,
-    ),
     Metric(
         "avg_pace_s_per_mi",
         "Avg pace",
@@ -110,25 +88,6 @@ METRICS: list[Metric] = [
         "ft",
         lambda a: meters_to_feet(a.elevation_gain_m),
         digits=0,
-    ),
-    Metric("calories", "Calories", "kcal", lambda a: a.calories, digits=0),
-    Metric("aerobic_te", "Aerobic training effect", "", lambda a: a.aerobic_te),
-    Metric("anaerobic_te", "Anaerobic training effect", "", lambda a: a.anaerobic_te),
-    Metric(
-        "meters_per_beat",
-        "Distance per heartbeat",
-        "m/beat",
-        _meters_per_beat,
-        better="higher",
-        digits=2,
-    ),
-    Metric(
-        "watts_per_beat",
-        "Power per heartbeat",
-        "W/bpm",
-        _watts_per_beat,
-        better="higher",
-        digits=2,
     ),
 ]
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.activity_details import DetailSection, activity_details
 from app.analytics.compare import MetricComparison, compare_activities
 from app.db import get_db
 from app.models import Activity
@@ -116,6 +117,23 @@ def compare(
 @router.get("/{activity_id}", response_model=ActivitySummary, operation_id="getActivity")
 def get_activity(activity_id: int, db: Annotated[Session, Depends(get_db)]) -> ActivitySummary:
     return ActivitySummary.from_activity(_get_owned(db, activity_id))
+
+
+class ActivityDetails(BaseModel):
+    """Everything Garmin recorded for one activity, grouped into labelled sections."""
+
+    id: int
+    sections: list[DetailSection]
+
+
+@router.get(
+    "/{activity_id}/details", response_model=ActivityDetails, operation_id="getActivityDetails"
+)
+def get_activity_details(
+    activity_id: int, db: Annotated[Session, Depends(get_db)]
+) -> ActivityDetails:
+    activity = _get_owned(db, activity_id)
+    return ActivityDetails(id=activity.id, sections=activity_details(activity.raw_json))
 
 
 def _get_owned(db: Session, activity_id: int) -> Activity:

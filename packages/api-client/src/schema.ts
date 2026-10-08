@@ -78,6 +78,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/{activity_id}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity Details */
+        get: operations["getActivityDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sync/status": {
         parameters: {
             query?: never;
@@ -131,6 +148,16 @@ export interface components {
             /** Metrics */
             metrics: components["schemas"]["MetricComparison"][];
         };
+        /**
+         * ActivityDetails
+         * @description Everything Garmin recorded for one activity, grouped into labelled sections.
+         */
+        ActivityDetails: {
+            /** Id */
+            id: number;
+            /** Sections */
+            sections: components["schemas"]["DetailSection"][];
+        };
         /** ActivityPage */
         ActivityPage: {
             /** Items */
@@ -181,6 +208,24 @@ export interface components {
             anaerobic_te: number | null;
             /** Calories */
             calories: number | null;
+        };
+        /** DetailItem */
+        DetailItem: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: number | string;
+            /** Display */
+            display: string;
+        };
+        /** DetailSection */
+        DetailSection: {
+            /** Title */
+            title: string;
+            /** Items */
+            items: components["schemas"]["DetailItem"][];
         };
         /** GarminProblem */
         GarminProblem: {
@@ -377,6 +422,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivitySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getActivityDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityDetails"];
                 };
             };
             /** @description Validation Error */
