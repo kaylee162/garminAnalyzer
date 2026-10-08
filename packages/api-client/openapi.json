@@ -296,6 +296,70 @@
           }
         }
       }
+    },
+    "/plan": {
+      "get": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "Plan",
+        "description": "Estimate race time from recent runs and lay out the weeks until race day.\n\nNothing is stored: the plan is recalculated from your latest runs on every request.",
+        "operationId": "buildTrainingPlan",
+        "parameters": [
+          {
+            "name": "race",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "5k",
+                "10k",
+                "20k",
+                "half_marathon",
+                "marathon"
+              ],
+              "type": "string",
+              "description": "What you're training for",
+              "title": "Race"
+            },
+            "description": "What you're training for"
+          },
+          {
+            "name": "race_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Race day, YYYY-MM-DD",
+              "title": "Race Date"
+            },
+            "description": "Race day, YYYY-MM-DD"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -631,6 +695,58 @@
         ],
         "title": "DetailSection"
       },
+      "Effort": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "activity_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Name"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "distance_mi": {
+            "type": "number",
+            "title": "Distance Mi"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "vdot": {
+            "type": "number",
+            "title": "Vdot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "activity_name",
+          "date",
+          "label",
+          "distance_mi",
+          "time_s",
+          "vdot"
+        ],
+        "title": "Effort",
+        "description": "The run (or the stretch of a run) the fitness estimate came from."
+      },
       "GarminProblem": {
         "properties": {
           "detail": {
@@ -801,6 +917,169 @@
         ],
         "title": "MetricComparison"
       },
+      "PaceZone": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "fast_s_per_mi": {
+            "type": "number",
+            "title": "Fast S Per Mi"
+          },
+          "slow_s_per_mi": {
+            "type": "number",
+            "title": "Slow S Per Mi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "purpose",
+          "fast_s_per_mi",
+          "slow_s_per_mi"
+        ],
+        "title": "PaceZone"
+      },
+      "PlanWeek": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "base",
+              "build",
+              "peak",
+              "taper"
+            ],
+            "title": "Phase"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "total_mi": {
+            "type": "number",
+            "title": "Total Mi"
+          },
+          "workouts": {
+            "items": {
+              "$ref": "#/components/schemas/Workout"
+            },
+            "type": "array",
+            "title": "Workouts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "phase",
+          "start_date",
+          "total_mi",
+          "workouts"
+        ],
+        "title": "PlanWeek"
+      },
+      "RecentTraining": {
+        "properties": {
+          "run_count": {
+            "type": "integer",
+            "title": "Run Count"
+          },
+          "days_covered": {
+            "type": "integer",
+            "title": "Days Covered"
+          },
+          "weekly_mi": {
+            "type": "number",
+            "title": "Weekly Mi"
+          },
+          "runs_per_week": {
+            "type": "number",
+            "title": "Runs Per Week"
+          },
+          "longest_run_mi": {
+            "type": "number",
+            "title": "Longest Run Mi"
+          },
+          "avg_pace_s_per_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Pace S Per Mi"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "avg_cadence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Cadence"
+          },
+          "avg_stride_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Stride M"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_count",
+          "days_covered",
+          "weekly_mi",
+          "runs_per_week",
+          "longest_run_mi",
+          "avg_pace_s_per_mi",
+          "avg_hr",
+          "avg_cadence",
+          "avg_stride_m",
+          "stale"
+        ],
+        "title": "RecentTraining",
+        "description": "What your recent running looks like, averaged over the runs used."
+      },
       "SyncResultOut": {
         "properties": {
           "added": {
@@ -867,6 +1146,104 @@
         ],
         "title": "SyncStatus"
       },
+      "TrainingPlan": {
+        "properties": {
+          "race": {
+            "type": "string",
+            "enum": [
+              "5k",
+              "10k",
+              "20k",
+              "half_marathon",
+              "marathon"
+            ],
+            "title": "Race"
+          },
+          "race_label": {
+            "type": "string",
+            "title": "Race Label"
+          },
+          "race_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Race Date"
+          },
+          "race_distance_mi": {
+            "type": "number",
+            "title": "Race Distance Mi"
+          },
+          "weeks_until_race": {
+            "type": "integer",
+            "title": "Weeks Until Race"
+          },
+          "fitness": {
+            "$ref": "#/components/schemas/Effort"
+          },
+          "predicted_time_s": {
+            "type": "number",
+            "title": "Predicted Time S"
+          },
+          "predicted_pace_s_per_mi": {
+            "type": "number",
+            "title": "Predicted Pace S Per Mi"
+          },
+          "projected_vdot": {
+            "type": "number",
+            "title": "Projected Vdot"
+          },
+          "projected_time_s": {
+            "type": "number",
+            "title": "Projected Time S"
+          },
+          "projected_pace_s_per_mi": {
+            "type": "number",
+            "title": "Projected Pace S Per Mi"
+          },
+          "recent": {
+            "$ref": "#/components/schemas/RecentTraining"
+          },
+          "paces": {
+            "items": {
+              "$ref": "#/components/schemas/PaceZone"
+            },
+            "type": "array",
+            "title": "Paces"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/PlanWeek"
+            },
+            "type": "array",
+            "title": "Weeks"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "race",
+          "race_label",
+          "race_date",
+          "race_distance_mi",
+          "weeks_until_race",
+          "fitness",
+          "predicted_time_s",
+          "predicted_pace_s_per_mi",
+          "projected_vdot",
+          "projected_time_s",
+          "projected_pace_s_per_mi",
+          "recent",
+          "paces",
+          "weeks",
+          "notes"
+        ],
+        "title": "TrainingPlan"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -906,6 +1283,64 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Workout": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "easy",
+              "strides",
+              "long",
+              "threshold",
+              "intervals",
+              "race_pace",
+              "race"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "distance_mi": {
+            "type": "number",
+            "title": "Distance Mi"
+          },
+          "pace_zone": {
+            "type": "string",
+            "title": "Pace Zone"
+          },
+          "fast_s_per_mi": {
+            "type": "number",
+            "title": "Fast S Per Mi"
+          },
+          "slow_s_per_mi": {
+            "type": "number",
+            "title": "Slow S Per Mi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "kind",
+          "title",
+          "description",
+          "distance_mi",
+          "pace_zone",
+          "fast_s_per_mi",
+          "slow_s_per_mi"
+        ],
+        "title": "Workout"
       }
     }
   }

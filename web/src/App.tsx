@@ -3,6 +3,7 @@ import { useHealth } from "./api/health";
 import { RecentRuns } from "./components/RecentRuns";
 import { RunComparison } from "./components/RunComparison";
 import { SyncPanel } from "./components/SyncPanel";
+import { TrainingPlan } from "./components/TrainingPlan";
 
 export function App() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -21,6 +22,7 @@ export function App() {
       <SyncPanel />
       <RecentRuns selectedIds={selectedIds} onToggle={toggleRun} />
       <RunComparison selectedIds={selectedIds} onClear={() => setSelectedIds([])} />
+      <TrainingPlan />
     </main>
   );
 }

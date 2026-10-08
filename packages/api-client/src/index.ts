@@ -11,6 +11,12 @@ export type ActivityComparison = Schemas["ActivityComparison"];
 export type MetricComparison = Schemas["MetricComparison"];
 export type SyncStatus = Schemas["SyncStatus"];
 export type SyncResult = Schemas["SyncResultOut"];
+export type TrainingPlan = Schemas["TrainingPlan"];
+export type PlanWeek = Schemas["PlanWeek"];
+export type Workout = Schemas["Workout"];
+export type PaceZone = Schemas["PaceZone"];
+export type RecentTraining = Schemas["RecentTraining"];
+export type Race = TrainingPlan["race"];
 
 /** Create a typed API client. Every path, parameter and response is checked against the backend's OpenAPI spec. */
 export function createApiClient(baseUrl: string) {
