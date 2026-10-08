@@ -14,6 +14,21 @@ export function useRecentRuns(limit = 30) {
   });
 }
 
+/** Every detail Garmin recorded for one run. Only fetched once the row is expanded. */
+export function useActivityDetails(id: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["activities", "details", id],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/activities/{activity_id}/details", {
+        params: { path: { activity_id: id } },
+      });
+      if (error || !data) throw new Error("Could not load run details");
+      return data;
+    },
+  });
+}
+
 /** Compares two runs once both are picked. The API orders them by date, so `ids` can be in any order. */
 export function useCompareRuns(ids: [number, number] | null) {
   return useQuery({

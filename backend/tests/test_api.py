@@ -53,3 +53,22 @@ def test_sync_without_garmin_login_explains_what_to_do(db):
 
     assert response.status_code == 502
     assert "GA_GARMIN_EMAIL" in response.json()["detail"]
+
+
+def test_activity_details_groups_garmin_fields(client):
+    client.post("/sync")
+    run_id = client.get("/activities", params={"sport": "run"}).json()["items"][0]["id"]
+
+    body = client.get(f"/activities/{run_id}/details").json()
+    sections = {
+        s["title"]: {i["label"]: i["display"] for i in s["items"]} for s in body["sections"]
+    }
+
+    assert sections["Overview"]["Distance"] == "5.00 mi"
+    assert sections["Pace"]["Avg pace"] == "8:48 /mi"  # from averageSpeed 3.05 m/s
+    assert sections["Running dynamics"]["Avg stride length"] == "1.08 m"
+    assert sections["Training effect"]["Anaerobic"] == "0.0"  # a real zero is kept
+    # Ids and booleans never show up as metrics.
+    other = sections.get("Other", {})
+    assert "Activity id" not in other
+    assert client.get("/activities/9999/details").status_code == 404

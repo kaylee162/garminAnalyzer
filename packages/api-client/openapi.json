@@ -202,6 +202,48 @@
         }
       }
     },
+    "/activities/{activity_id}/details": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity Details",
+        "operationId": "getActivityDetails",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sync/status": {
       "get": {
         "tags": [
@@ -287,6 +329,28 @@
         ],
         "title": "ActivityComparison",
         "description": "Two runs side by side. The runs are put in date order and changes run earlier -> later."
+      },
+      "ActivityDetails": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DetailSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sections"
+        ],
+        "title": "ActivityDetails",
+        "description": "Everything Garmin recorded for one activity, grouped into labelled sections."
       },
       "ActivityPage": {
         "properties": {
@@ -510,6 +574,62 @@
           "calories"
         ],
         "title": "ActivitySummary"
+      },
+      "DetailItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          },
+          "display": {
+            "type": "string",
+            "title": "Display"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value",
+          "display"
+        ],
+        "title": "DetailItem"
+      },
+      "DetailSection": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DetailItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "items"
+        ],
+        "title": "DetailSection"
       },
       "GarminProblem": {
         "properties": {
