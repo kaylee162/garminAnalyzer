@@ -43,6 +43,8 @@ npm run dev:web
 
 The home page shows whether the web app can reach the API and database, a **Sync now** button, and your recent runs.
 
+The **Training plan** section takes a race (5K to marathon) and a date, estimates your race time today from your best recent effort (Jack Daniels' VDOT formula), and lays out the weeks until race day with a pace for every run. The math is in `backend/app/analytics/planner.py`.
+
 ## Connect Garmin
 
 Your Garmin login stays on your computer. It goes in `backend/.env`, which git ignores.

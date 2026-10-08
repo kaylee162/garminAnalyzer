@@ -132,6 +132,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan
+         * @description Estimate race time from recent runs and lay out the weeks until race day.
+         *
+         *     Nothing is stored: the plan is recalculated from your latest runs on every request.
+         */
+        get: operations["buildTrainingPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -227,6 +249,29 @@ export interface components {
             /** Items */
             items: components["schemas"]["DetailItem"][];
         };
+        /**
+         * Effort
+         * @description The run (or the stretch of a run) the fitness estimate came from.
+         */
+        Effort: {
+            /** Activity Id */
+            activity_id: number;
+            /** Activity Name */
+            activity_name: string | null;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Label */
+            label: string;
+            /** Distance Mi */
+            distance_mi: number;
+            /** Time S */
+            time_s: number;
+            /** Vdot */
+            vdot: number;
+        };
         /** GarminProblem */
         GarminProblem: {
             /** Detail */
@@ -275,6 +320,64 @@ export interface components {
             /** Summary */
             summary: string | null;
         };
+        /** PaceZone */
+        PaceZone: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Purpose */
+            purpose: string;
+            /** Fast S Per Mi */
+            fast_s_per_mi: number;
+            /** Slow S Per Mi */
+            slow_s_per_mi: number;
+        };
+        /** PlanWeek */
+        PlanWeek: {
+            /** Number */
+            number: number;
+            /**
+             * Phase
+             * @enum {string}
+             */
+            phase: "base" | "build" | "peak" | "taper";
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Total Mi */
+            total_mi: number;
+            /** Workouts */
+            workouts: components["schemas"]["Workout"][];
+        };
+        /**
+         * RecentTraining
+         * @description What your recent running looks like, averaged over the runs used.
+         */
+        RecentTraining: {
+            /** Run Count */
+            run_count: number;
+            /** Days Covered */
+            days_covered: number;
+            /** Weekly Mi */
+            weekly_mi: number;
+            /** Runs Per Week */
+            runs_per_week: number;
+            /** Longest Run Mi */
+            longest_run_mi: number;
+            /** Avg Pace S Per Mi */
+            avg_pace_s_per_mi: number | null;
+            /** Avg Hr */
+            avg_hr: number | null;
+            /** Avg Cadence */
+            avg_cadence: number | null;
+            /** Avg Stride M */
+            avg_stride_m: number | null;
+            /** Stale */
+            stale: boolean;
+        };
         /** SyncResultOut */
         SyncResultOut: {
             /** Added */
@@ -295,6 +398,43 @@ export interface components {
             /** Activity Count */
             activity_count: number;
         };
+        /** TrainingPlan */
+        TrainingPlan: {
+            /**
+             * Race
+             * @enum {string}
+             */
+            race: "5k" | "10k" | "20k" | "half_marathon" | "marathon";
+            /** Race Label */
+            race_label: string;
+            /**
+             * Race Date
+             * Format: date
+             */
+            race_date: string;
+            /** Race Distance Mi */
+            race_distance_mi: number;
+            /** Weeks Until Race */
+            weeks_until_race: number;
+            fitness: components["schemas"]["Effort"];
+            /** Predicted Time S */
+            predicted_time_s: number;
+            /** Predicted Pace S Per Mi */
+            predicted_pace_s_per_mi: number;
+            /** Projected Vdot */
+            projected_vdot: number;
+            /** Projected Time S */
+            projected_time_s: number;
+            /** Projected Pace S Per Mi */
+            projected_pace_s_per_mi: number;
+            recent: components["schemas"]["RecentTraining"];
+            /** Paces */
+            paces: components["schemas"]["PaceZone"][];
+            /** Weeks */
+            weeks: components["schemas"]["PlanWeek"][];
+            /** Notes */
+            notes: string[];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -307,6 +447,31 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** Workout */
+        Workout: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "easy" | "strides" | "long" | "threshold" | "intervals" | "race_pace" | "race";
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Distance Mi */
+            distance_mi: number;
+            /** Pace Zone */
+            pace_zone: string;
+            /** Fast S Per Mi */
+            fast_s_per_mi: number;
+            /** Slow S Per Mi */
+            slow_s_per_mi: number;
         };
     };
     responses: never;
@@ -511,6 +676,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GarminProblem"];
+                };
+            };
+        };
+    };
+    buildTrainingPlan: {
+        parameters: {
+            query: {
+                /** @description What you're training for */
+                race: "5k" | "10k" | "20k" | "half_marathon" | "marathon";
+                /** @description Race day, YYYY-MM-DD */
+                race_date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingPlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
