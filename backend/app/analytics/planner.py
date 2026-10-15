@@ -20,7 +20,7 @@ from datetime import date, timedelta
 from statistics import mean
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models import Activity
 from app.units import METERS_PER_MILE
@@ -318,7 +318,7 @@ class Workout(BaseModel):
     kind: WorkoutKind
     title: str
     description: str
-    distance_mi: float
+    distance_mi: float = Field(ge=0)
     pace_zone: str
     fast_s_per_mi: float
     slow_s_per_mi: float

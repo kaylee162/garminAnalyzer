@@ -43,7 +43,7 @@ npm run dev:web
 
 The home page shows whether the web app can reach the API and database, a **Sync now** button, and your recent runs.
 
-The **Training plan** section takes a race (5K to marathon) and a date, estimates your race time today from your best recent effort (Jack Daniels' VDOT formula), and lays out the weeks until race day with a pace for every run. The math is in `backend/app/analytics/planner.py`.
+The **Training plan** section takes a race (5K to marathon) and a date, estimates your race time today from your best recent effort (Jack Daniels' VDOT formula), and lays out the weeks until race day with a pace for every run. The math is in `backend/app/analytics/planner.py`. Every run in the plan can be edited (date, distance, type, pace, notes), removed, or added to, and **Save plan** at the bottom stores it in the database. Saved plans are listed above the form; click **Open** to bring one back up.
 
 ## Connect Garmin
 
@@ -65,7 +65,7 @@ Your Garmin login stays on your computer. It goes in `backend/.env`, which git i
    uv run python -m app.sync
    ```
 
-After the first login the app saves login tokens in `backend/data/garmin_tokens/` and reuses them, so you can remove the password from `.env` if you like. From then on the **Sync now** button in the web app fetches new activities. `uv run python -m app.sync --full` re-fetches everything.
+After the first login the app saves login tokens in `backend/data/garmin_tokens/` and reuses them, so you can remove the password from `.env` if you like. From then on the **Sync now** button in the web app fetches new activities. Runs slower than 16:00 per mile are treated as walks: they're still stored, but grouped as "other" so they don't show up as runs or count toward training plans (threshold in `backend/app/sync/normalize.py`). `uv run python -m app.sync --full` re-fetches everything.
 
 The sync uses the unofficial [garminconnect](https://github.com/cyberjunky/python-garminconnect) library. If Garmin changes its login, only `backend/app/sync/garmin.py` needs to change.
 

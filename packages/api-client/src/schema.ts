@@ -41,6 +41,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity Stats */
+        get: operations["getActivityStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activities/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Activity Trend
+         * @description Every activity of one sport from `since` up to now, oldest first.
+         */
+        get: operations["getActivityTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/compare": {
         parameters: {
             query?: never;
@@ -143,12 +180,59 @@ export interface paths {
          * Plan
          * @description Estimate race time from recent runs and lay out the weeks until race day.
          *
-         *     Nothing is stored: the plan is recalculated from your latest runs on every request.
+         *     Nothing is stored here: the plan is recalculated from your latest runs on every request.
+         *     POST it to /plans to keep it (with any edits).
          */
         get: operations["buildTrainingPlan"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Plans
+         * @description Saved plans, the soonest race first.
+         */
+        get: operations["listSavedPlans"];
+        put?: never;
+        /**
+         * Save Plan
+         * @description Save a plan (usually one from GET /plan, possibly edited) so it is kept as-is.
+         */
+        post: operations["savePlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["getSavedPlan"];
+        /**
+         * Update Plan
+         * @description Replace a saved plan with an edited version.
+         */
+        put: operations["updateSavedPlan"];
+        post?: never;
+        /** Delete Plan */
+        delete: operations["deleteSavedPlan"];
         options?: never;
         head?: never;
         patch?: never;
@@ -186,6 +270,20 @@ export interface components {
             items: components["schemas"]["ActivitySummary"][];
             /** Total */
             total: number;
+        };
+        /**
+         * ActivityStats
+         * @description Averages over every synced activity of one sport. Each average skips activities missing that metric.
+         */
+        ActivityStats: {
+            /** Count */
+            count: number;
+            /** Avg Pace S Per Mi */
+            avg_pace_s_per_mi: number | null;
+            /** Avg Distance Mi */
+            avg_distance_mi: number | null;
+            /** Avg Hr */
+            avg_hr: number | null;
         };
         /** ActivitySummary */
         ActivitySummary: {
@@ -378,6 +476,67 @@ export interface components {
             /** Stale */
             stale: boolean;
         };
+        /** SavePlanRequest */
+        SavePlanRequest: {
+            /** Name */
+            name: string;
+            plan: components["schemas"]["TrainingPlan"];
+        };
+        /** SavedPlan */
+        SavedPlan: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Race
+             * @enum {string}
+             */
+            race: "5k" | "10k" | "20k" | "half_marathon" | "marathon";
+            /**
+             * Race Date
+             * Format: date
+             */
+            race_date: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            plan: components["schemas"]["TrainingPlan"];
+        };
+        /** SavedPlanSummary */
+        SavedPlanSummary: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Race
+             * @enum {string}
+             */
+            race: "5k" | "10k" | "20k" | "half_marathon" | "marathon";
+            /**
+             * Race Date
+             * Format: date
+             */
+            race_date: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** SyncResultOut */
         SyncResultOut: {
             /** Added */
@@ -434,6 +593,29 @@ export interface components {
             weeks: components["schemas"]["PlanWeek"][];
             /** Notes */
             notes: string[];
+        };
+        /**
+         * TrendPoint
+         * @description One activity's headline numbers, for plotting progression over time.
+         */
+        TrendPoint: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string | null;
+            /**
+             * Start Time Local
+             * Format: date-time
+             */
+            start_time_local: string;
+            /** Distance Mi */
+            distance_mi: number | null;
+            /** Avg Pace S Per Mi */
+            avg_pace_s_per_mi: number | null;
+            /** Avg Hr */
+            avg_hr: number | null;
+            /** Max Hr */
+            max_hr: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -522,6 +704,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getActivityStats: {
+        parameters: {
+            query?: {
+                sport?: "run" | "bike" | "other";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getActivityTrend: {
+        parameters: {
+            query: {
+                /** @description First local date to include */
+                since: string;
+                sport?: "run" | "bike" | "other";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendPoint"][];
                 };
             };
             /** @description Validation Error */
@@ -702,6 +948,154 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TrainingPlan"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listSavedPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlanSummary"][];
+                };
+            };
+        };
+    };
+    savePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSavedPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateSavedPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteSavedPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

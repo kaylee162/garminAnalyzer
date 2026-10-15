@@ -1,14 +1,55 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ActivitySummary } from "@garmin-analyzer/api-client";
 import { api } from "./client";
 
-export function useRecentRuns(limit = 30) {
+// The most the API returns in one request.
+const PAGE_SIZE = 200;
+
+/** Every run, newest first, fetched a page at a time. */
+export function useAllRuns() {
   return useQuery({
-    queryKey: ["activities", "run", limit],
+    queryKey: ["activities", "run", "all"],
     queryFn: async () => {
-      const { data, error } = await api.GET("/activities", {
-        params: { query: { sport: "run", limit } },
+      const runs: ActivitySummary[] = [];
+      let total = Infinity;
+      while (runs.length < total) {
+        const { data, error } = await api.GET("/activities", {
+          params: { query: { sport: "run", limit: PAGE_SIZE, offset: runs.length } },
+        });
+        if (error || !data) throw new Error("Could not load activities");
+        runs.push(...data.items);
+        total = data.total;
+        if (data.items.length === 0) break;
+      }
+      return runs;
+    },
+  });
+}
+
+/** Averages over every synced run. Lives under ["activities"], so a sync refreshes it. */
+export function useRunStats() {
+  return useQuery({
+    queryKey: ["activities", "stats", "run"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/activities/stats", {
+        params: { query: { sport: "run" } },
       });
-      if (error || !data) throw new Error("Could not load activities");
+      if (error || !data) throw new Error("Could not load run stats");
+      return data;
+    },
+  });
+}
+
+/** Every run from `since` (a local YYYY-MM-DD date) to now, oldest first. Keeps the last range on screen while a new one loads. */
+export function useRunTrend(since: string) {
+  return useQuery({
+    queryKey: ["activities", "trend", "run", since],
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/activities/trend", {
+        params: { query: { since, sport: "run" } },
+      });
+      if (error || !data) throw new Error("Could not load run trend");
       return data;
     },
   });

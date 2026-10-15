@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ActivitySummary } from "@garmin-analyzer/api-client";
-import { useActivityDetails, useRecentRuns } from "../api/activities";
+import { useActivityDetails, useAllRuns } from "../api/activities";
 import { formatDate, formatDuration, formatNumber } from "../format";
 
 type RecentRunsProps = {
@@ -9,38 +9,50 @@ type RecentRunsProps = {
 };
 
 const COLUMN_COUNT = 6;
+const COLLAPSED_COUNT = 3;
 
 export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
-  const { data, isPending, isError } = useRecentRuns();
+  const { data, isPending, isError } = useAllRuns();
+  const [showAll, setShowAll] = useState(false);
+  const runs = data ?? [];
+  const visibleRuns = showAll ? runs : runs.slice(0, COLLAPSED_COUNT);
 
   return (
-    <section className="mt-8">
-      <h2 className="text-lg font-semibold">Recent runs</h2>
-      <p className="mt-1 text-sm text-slate-500">Tick two runs to compare them.</p>
-      {isPending && <p className="mt-2 text-sm text-slate-500">Loading…</p>}
-      {isError && <p className="mt-2 text-sm text-red-600">Could not load runs.</p>}
-      {data && data.items.length === 0 && (
-        <p className="mt-2 text-sm text-slate-500">No runs yet. Sync with Garmin to pull them in.</p>
+    <section id="runs" className="mt-10 scroll-mt-20 sm:mt-14">
+      <h2 className="text-xl font-bold tracking-tight">Recent runs</h2>
+      <p className="mt-1 text-sm text-ink-muted">Tick two runs to compare them.</p>
+      {isPending && <p className="mt-4 text-sm text-ink-faint">Loading…</p>}
+      {isError && <p className="mt-4 text-sm text-bad">Could not load runs.</p>}
+      {data && data.length === 0 && (
+        <p className="card mt-4 px-5 py-8 text-center text-sm text-ink-muted">
+          No runs yet. Sync with Garmin to pull them in.
+        </p>
       )}
-      {data && data.items.length > 0 && (
-        <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200">
+      {runs.length > 0 && (
+        <div className="card mt-4 overflow-hidden">
           <table className="w-full text-sm tabular-nums">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="border-b border-line text-left whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-ink-faint">
               <tr>
-                <th className="w-8 px-3 py-2">
+                <th className="w-10 py-3 pr-1 pl-4">
                   <span className="sr-only">Compare</span>
                 </th>
-                <th className="px-3 py-2 font-medium">Date</th>
-                <th className="px-3 py-2 font-medium">Run</th>
-                <th className="px-3 py-2 text-right font-medium">Distance</th>
-                <th className="px-3 py-2 text-right font-medium">Time</th>
-                <th className="w-10 px-3 py-2">
+                <th className="hidden px-3 py-3 font-semibold sm:table-cell">Date</th>
+                <th className="px-3 py-3 font-semibold">Run</th>
+                <th className="px-3 py-3 text-right font-semibold">
+                  <MetricDot className="bg-metric-distance" />
+                  Distance
+                </th>
+                <th className="py-3 pr-1 pl-3 text-right font-semibold sm:px-3">
+                  <MetricDot className="bg-metric-time" />
+                  Time
+                </th>
+                <th className="w-12 py-3 pr-3 pl-1">
                   <span className="sr-only">Details</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {data.items.map((run) => (
+              {visibleRuns.map((run) => (
                 <RunRow
                   key={run.id}
                   run={run}
@@ -50,6 +62,18 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
               ))}
             </tbody>
           </table>
+          {runs.length > COLLAPSED_COUNT && (
+            <div className="border-t border-line p-2 text-center">
+              <button
+                type="button"
+                onClick={() => setShowAll((all) => !all)}
+                aria-expanded={showAll}
+                className="btn btn-ghost w-full"
+              >
+                {showAll ? "Show fewer" : `Show all ${runs.length} runs`}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -69,21 +93,34 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
 
   return (
     <>
-      <tr className={`border-t border-slate-100 ${selected ? "bg-sky-50" : ""}`}>
-        <td className="px-3 py-2">
-          <input type="checkbox" checked={selected} onChange={onToggle} aria-label={`Compare ${name} on ${date}`} />
+      <tr
+        className={`border-t border-line transition-colors first:border-t-0 ${selected ? "bg-accent/10" : "hover:bg-surface"}`}
+      >
+        <td className={`py-3 pr-1 pl-4 ${selected ? "shadow-[inset_3px_0_0_var(--color-accent)]" : ""}`}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggle}
+            aria-label={`Compare ${name} on ${date}`}
+            className="h-4 w-4 cursor-pointer"
+          />
         </td>
-        <td className="whitespace-nowrap px-3 py-2 text-slate-600">{date}</td>
-        <td className="px-3 py-2">{name}</td>
-        <td className="px-3 py-2 text-right">{formatNumber(run.distance_mi, 2, " mi")}</td>
-        <td className="px-3 py-2 text-right">{formatDuration(run.moving_time_s ?? run.duration_s)}</td>
-        <td className="px-3 py-1 text-right">
+        <td className="hidden whitespace-nowrap px-3 py-3 text-ink-muted sm:table-cell">{date}</td>
+        <td className="px-3 py-3">
+          <p className="font-semibold">{name}</p>
+          <p className="text-xs text-ink-faint sm:hidden">{date}</p>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3 text-right font-medium">{formatNumber(run.distance_mi, 2, " mi")}</td>
+        <td className="whitespace-nowrap py-3 pr-1 pl-3 text-right text-ink-muted sm:px-3">
+          {formatDuration(run.moving_time_s ?? run.duration_s)}
+        </td>
+        <td className="py-2 pr-3 pl-1 text-right">
           <button
             type="button"
             onClick={() => setExpanded((open) => !open)}
             aria-expanded={expanded}
             aria-label={`${expanded ? "Hide" : "Show"} details for ${name} on ${date}`}
-            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-ink-faint transition-colors hover:bg-surface-raised hover:text-ink"
           >
             <svg
               viewBox="0 0 20 20"
@@ -101,8 +138,8 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
         </td>
       </tr>
       {expanded && (
-        <tr className="border-t border-slate-100 bg-slate-50/60">
-          <td colSpan={COLUMN_COUNT} className="px-4 py-4">
+        <tr className="border-t border-line bg-black/20">
+          <td colSpan={COLUMN_COUNT} className="px-4 py-5 sm:px-6">
             <RunDetails id={run.id} />
           </td>
         </tr>
@@ -114,19 +151,19 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
 function RunDetails({ id }: { id: number }) {
   const { data, isPending, isError } = useActivityDetails(id, true);
 
-  if (isPending) return <p className="text-slate-500">Loading details…</p>;
-  if (isError) return <p className="text-red-600">Could not load details for this run.</p>;
+  if (isPending) return <p className="text-ink-faint">Loading details…</p>;
+  if (isError) return <p className="text-bad">Could not load details for this run.</p>;
 
   return (
-    <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
       {data.sections.map((section) => (
         <div key={section.title}>
-          <h3 className="text-xs font-medium uppercase tracking-wide text-slate-500">{section.title}</h3>
-          <dl className="mt-1.5 space-y-0.5">
+          <h3 className="eyebrow">{section.title}</h3>
+          <dl className="mt-2 space-y-1">
             {section.items.map((item) => (
               <div key={item.key} className="flex justify-between gap-4">
-                <dt className="text-slate-600">{item.label}</dt>
-                <dd className="text-right">{item.display}</dd>
+                <dt className="text-ink-muted">{item.label}</dt>
+                <dd className="text-right font-medium">{item.display}</dd>
               </div>
             ))}
           </dl>
@@ -134,4 +171,8 @@ function RunDetails({ id }: { id: number }) {
       ))}
     </div>
   );
+}
+
+function MetricDot({ className }: { className: string }) {
+  return <span aria-hidden="true" className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle ${className}`} />;
 }

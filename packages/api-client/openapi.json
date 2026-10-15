@@ -104,6 +104,119 @@
         }
       }
     },
+    "/activities/stats": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity Stats",
+        "operationId": "getActivityStats",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "run",
+                "bike",
+                "other"
+              ],
+              "type": "string",
+              "default": "run",
+              "title": "Sport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activities/trend": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity Trend",
+        "description": "Every activity of one sport from `since` up to now, oldest first.",
+        "operationId": "getActivityTrend",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "First local date to include",
+              "title": "Since"
+            },
+            "description": "First local date to include"
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "run",
+                "bike",
+                "other"
+              ],
+              "type": "string",
+              "default": "run",
+              "title": "Sport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrendPoint"
+                  },
+                  "title": "Response Getactivitytrend"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/activities/compare": {
       "get": {
         "tags": [
@@ -303,7 +416,7 @@
           "plan"
         ],
         "summary": "Plan",
-        "description": "Estimate race time from recent runs and lay out the weeks until race day.\n\nNothing is stored: the plan is recalculated from your latest runs on every request.",
+        "description": "Estimate race time from recent runs and lay out the weeks until race day.\n\nNothing is stored here: the plan is recalculated from your latest runs on every request.\nPOST it to /plans to keep it (with any edits).",
         "operationId": "buildTrainingPlan",
         "parameters": [
           {
@@ -347,6 +460,198 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans": {
+      "get": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "List Plans",
+        "description": "Saved plans, the soonest race first.",
+        "operationId": "listSavedPlans",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SavedPlanSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Listsavedplans"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "Save Plan",
+        "description": "Save a plan (usually one from GET /plan, possibly edited) so it is kept as-is.",
+        "operationId": "savePlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "Get Plan",
+        "operationId": "getSavedPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "Update Plan",
+        "description": "Replace a saved plan with an edited version.",
+        "operationId": "updateSavedPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "plan"
+        ],
+        "summary": "Delete Plan",
+        "operationId": "deleteSavedPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -436,6 +741,56 @@
           "total"
         ],
         "title": "ActivityPage"
+      },
+      "ActivityStats": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "avg_pace_s_per_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Pace S Per Mi"
+          },
+          "avg_distance_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Distance Mi"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "avg_pace_s_per_mi",
+          "avg_distance_mi",
+          "avg_hr"
+        ],
+        "title": "ActivityStats",
+        "description": "Averages over every synced activity of one sport. Each average skips activities missing that metric."
       },
       "ActivitySummary": {
         "properties": {
@@ -1080,6 +1435,125 @@
         "title": "RecentTraining",
         "description": "What your recent running looks like, averaged over the runs used."
       },
+      "SavePlanRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/TrainingPlan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "plan"
+        ],
+        "title": "SavePlanRequest"
+      },
+      "SavedPlan": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "race": {
+            "type": "string",
+            "enum": [
+              "5k",
+              "10k",
+              "20k",
+              "half_marathon",
+              "marathon"
+            ],
+            "title": "Race"
+          },
+          "race_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Race Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/TrainingPlan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "race",
+          "race_date",
+          "created_at",
+          "updated_at",
+          "plan"
+        ],
+        "title": "SavedPlan"
+      },
+      "SavedPlanSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "race": {
+            "type": "string",
+            "enum": [
+              "5k",
+              "10k",
+              "20k",
+              "half_marathon",
+              "marathon"
+            ],
+            "title": "Race"
+          },
+          "race_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Race Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "race",
+          "race_date",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SavedPlanSummary"
+      },
       "SyncResultOut": {
         "properties": {
           "added": {
@@ -1244,6 +1718,86 @@
         ],
         "title": "TrainingPlan"
       },
+      "TrendPoint": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "start_time_local": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time Local"
+          },
+          "distance_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Mi"
+          },
+          "avg_pace_s_per_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Pace S Per Mi"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "max_hr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Hr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "start_time_local",
+          "distance_mi",
+          "avg_pace_s_per_mi",
+          "avg_hr",
+          "max_hr"
+        ],
+        "title": "TrendPoint",
+        "description": "One activity's headline numbers, for plotting progression over time."
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1314,6 +1868,7 @@
           },
           "distance_mi": {
             "type": "number",
+            "minimum": 0.0,
             "title": "Distance Mi"
           },
           "pace_zone": {

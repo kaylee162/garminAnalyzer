@@ -27,7 +27,8 @@ def plan(
 ) -> TrainingPlan:
     """Estimate race time from recent runs and lay out the weeks until race day.
 
-    Nothing is stored: the plan is recalculated from your latest runs on every request.
+    Nothing is stored here: the plan is recalculated from your latest runs on every request.
+    POST it to /plans to keep it (with any edits).
     """
     user = get_default_user(db)
     runs = list(

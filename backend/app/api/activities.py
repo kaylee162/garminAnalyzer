@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.activity_details import DetailSection, activity_details
@@ -85,6 +85,84 @@ def list_activities(
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     rows = db.scalars(query.order_by(Activity.start_time.desc()).limit(limit).offset(offset))
     return ActivityPage(items=[ActivitySummary.from_activity(a) for a in rows], total=total)
+
+
+class ActivityStats(BaseModel):
+    """Averages over every synced activity of one sport. Each average skips activities missing that metric."""
+
+    count: int
+    # Total time over total distance, so long runs count for more than short ones.
+    avg_pace_s_per_mi: float | None
+    avg_distance_mi: float | None
+    # Mean of each activity's average heart rate.
+    avg_hr: float | None
+
+
+@router.get("/stats", response_model=ActivityStats, operation_id="getActivityStats")
+def get_activity_stats(
+    db: Annotated[Session, Depends(get_db)], sport: Sport = "run"
+) -> ActivityStats:
+    user = get_default_user(db)
+    time_s = func.coalesce(Activity.moving_time_s, Activity.duration_s)
+    has_pace = (Activity.distance_m > 0) & (time_s > 0)
+    count, avg_distance_m, avg_hr, paced_distance_m, paced_time_s = db.execute(
+        select(
+            func.count(),
+            func.avg(Activity.distance_m),
+            func.avg(Activity.avg_hr),
+            func.sum(case((has_pace, Activity.distance_m))),
+            func.sum(case((has_pace, time_s))),
+        ).where(Activity.user_id == user.id, Activity.sport == sport)
+    ).one()
+    return ActivityStats(
+        count=count,
+        avg_pace_s_per_mi=pace_s_per_mile(paced_distance_m, paced_time_s),
+        avg_distance_mi=meters_to_miles(avg_distance_m),
+        avg_hr=avg_hr,
+    )
+
+
+class TrendPoint(BaseModel):
+    """One activity's headline numbers, for plotting progression over time."""
+
+    id: int
+    name: str | None
+    start_time_local: datetime
+    distance_mi: float | None
+    avg_pace_s_per_mi: float | None
+    avg_hr: float | None
+    max_hr: float | None
+
+
+@router.get("/trend", response_model=list[TrendPoint], operation_id="getActivityTrend")
+def get_activity_trend(
+    db: Annotated[Session, Depends(get_db)],
+    since: Annotated[date, Query(description="First local date to include")],
+    sport: Sport = "run",
+) -> list[TrendPoint]:
+    """Every activity of one sport from `since` up to now, oldest first."""
+    user = get_default_user(db)
+    rows = db.scalars(
+        select(Activity)
+        .where(
+            Activity.user_id == user.id,
+            Activity.sport == sport,
+            Activity.start_time_local >= datetime.combine(since, time.min),
+        )
+        .order_by(Activity.start_time)
+    )
+    return [
+        TrendPoint(
+            id=a.id,
+            name=a.name,
+            start_time_local=a.start_time_local,
+            distance_mi=meters_to_miles(a.distance_m),
+            avg_pace_s_per_mi=pace_s_per_mile(a.distance_m, a.moving_time_s or a.duration_s),
+            avg_hr=a.avg_hr,
+            max_hr=a.max_hr,
+        )
+        for a in rows
+    ]
 
 
 class ActivityComparison(BaseModel):

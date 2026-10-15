@@ -7,6 +7,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 _TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+_METERS_PER_MILE = 1609.344
+# Runs slower than 16:00 per mile are almost always walks recorded as runs. They are kept,
+# but grouped as "other" so they stay out of run lists, comparisons and training plans.
+MAX_RUN_PACE_S_PER_MI = 16 * 60
 
 
 def sport_for(activity_type: str) -> str:
@@ -19,6 +23,16 @@ def sport_for(activity_type: str) -> str:
     return "other"
 
 
+def is_walking_pace(distance_m: float | None, time_s: float | None) -> bool:
+    """True when the average pace is slower than MAX_RUN_PACE_S_PER_MI.
+
+    Without a distance or time there is no pace to judge, so the activity is left alone.
+    """
+    if not distance_m or not time_s:
+        return False
+    return time_s / (distance_m / _METERS_PER_MILE) > MAX_RUN_PACE_S_PER_MI
+
+
 def normalize_activity(raw: dict[str, Any]) -> dict[str, Any]:
     """Map one item from Garmin's activity list to Activity column values."""
     activity_type = (raw.get("activityType") or {}).get("typeKey") or "other"
@@ -26,16 +40,23 @@ def normalize_activity(raw: dict[str, Any]) -> dict[str, Any]:
     cadence = _number(raw.get("averageRunningCadenceInStepsPerMinute")) or _number(
         raw.get("averageBikingCadenceInRevPerMinute")
     )
+    distance_m = _number(raw.get("distance"))
+    duration_s = _number(raw.get("duration"))
+    moving_time_s = _number(raw.get("movingDuration"))
+    sport = sport_for(activity_type)
+    # Same pace the app shows: moving time, falling back to total time.
+    if sport == "run" and is_walking_pace(distance_m, moving_time_s or duration_s):
+        sport = "other"
     return {
         "garmin_id": int(raw["activityId"]),
         "name": raw.get("activityName"),
-        "sport": sport_for(activity_type),
+        "sport": sport,
         "activity_type": activity_type,
         "start_time": datetime.strptime(raw["startTimeGMT"], _TIME_FORMAT).replace(tzinfo=UTC),
         "start_time_local": datetime.strptime(raw["startTimeLocal"], _TIME_FORMAT),
-        "duration_s": _number(raw.get("duration")),
-        "moving_time_s": _number(raw.get("movingDuration")),
-        "distance_m": _number(raw.get("distance")),
+        "duration_s": duration_s,
+        "moving_time_s": moving_time_s,
+        "distance_m": distance_m,
         "elevation_gain_m": _number(raw.get("elevationGain")),
         "avg_speed_mps": _number(raw.get("averageSpeed")),
         "avg_hr": _number(raw.get("averageHR")),

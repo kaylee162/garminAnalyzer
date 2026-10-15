@@ -72,3 +72,49 @@ def test_activity_details_groups_garmin_fields(client):
     other = sections.get("Other", {})
     assert "Activity id" not in other
     assert client.get("/activities/9999/details").status_code == 404
+
+
+def test_run_stats_average_every_run(db):
+    garmin = FakeGarmin(
+        [
+            # Two 5 mi runs in 2640 s and one 10 mi run in 6000 s: 11280 s / 20 mi = 564 s/mi.
+            garmin_activity(1, "2026-10-01 07:00:00", averageHR=140.0),
+            garmin_activity(
+                2, "2026-10-03 07:00:00", distance=16093.44, movingDuration=6000.0, averageHR=160.0
+            ),
+            garmin_activity(3, "2026-10-04 07:00:00", averageHR=None),  # no HR strap that day
+            garmin_activity(4, "2026-10-02 17:00:00", type_key="road_biking", averageHR=120.0),
+        ]
+    )
+    app.dependency_overrides[get_garmin_source] = lambda: garmin
+    client = TestClient(app)
+    try:
+        assert client.get("/activities/stats").json() == {
+            "count": 0,
+            "avg_pace_s_per_mi": None,
+            "avg_distance_mi": None,
+            "avg_hr": None,
+        }
+
+        client.post("/sync")
+        stats = client.get("/activities/stats").json()
+    finally:
+        app.dependency_overrides.clear()
+
+    assert stats["count"] == 3
+    assert stats["avg_pace_s_per_mi"] == pytest.approx((2640 * 2 + 6000) / 20)
+    assert stats["avg_distance_mi"] == pytest.approx(20 / 3)
+    assert stats["avg_hr"] == pytest.approx(150.0)  # the run without HR is skipped
+
+
+def test_run_trend_lists_runs_since_a_date_oldest_first(client):
+    client.post("/sync")
+
+    points = client.get("/activities/trend", params={"since": "2026-10-01"}).json()
+    assert [p["start_time_local"][:10] for p in points] == ["2026-10-01", "2026-10-03"]
+    assert points[0]["avg_pace_s_per_mi"] == pytest.approx(528.0)
+    assert points[0]["avg_hr"] == 148.0
+    assert points[0]["max_hr"] == 171.0
+
+    later = client.get("/activities/trend", params={"since": "2026-10-02"}).json()
+    assert [p["start_time_local"][:10] for p in later] == ["2026-10-03"]  # the bike ride is left out

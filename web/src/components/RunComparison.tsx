@@ -13,26 +13,31 @@ export function RunComparison({ selectedIds, onClear }: RunComparisonProps) {
 
   if (!pair) {
     if (selectedIds.length === 0) return null;
-    return <p className="mt-6 text-sm text-slate-500">Pick one more run to compare.</p>;
+    return (
+      <p className="mt-4 flex items-center gap-2 text-sm text-ink-muted">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+        Pick one more run to compare.
+      </p>
+    );
   }
 
   return (
-    <section className="mt-8">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Compare runs</h2>
-        <button type="button" onClick={onClear} className="text-sm text-slate-500 hover:text-slate-800">
+    <section className="mt-10 sm:mt-14">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold tracking-tight">Compare runs</h2>
+        <button type="button" onClick={onClear} className="btn btn-ghost px-3 py-1.5">
           Clear
         </button>
       </div>
-      {isPending && <p className="mt-2 text-sm text-slate-500">Comparing…</p>}
-      {isError && <p className="mt-2 text-sm text-red-600">Could not compare these runs.</p>}
+      {isPending && <p className="mt-4 text-sm text-ink-faint">Comparing…</p>}
+      {isError && <p className="mt-4 text-sm text-bad">Could not compare these runs.</p>}
       {data && (
         <>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4">
             <RunCard label="Earlier" run={data.earlier} />
             <RunCard label="Later" run={data.later} />
           </div>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-ink-faint">
             {Math.round(data.days_between)} days apart. Changes are measured from the earlier run.
           </p>
           <Analytics metrics={data.metrics} />
@@ -43,27 +48,31 @@ export function RunComparison({ selectedIds, onClear }: RunComparisonProps) {
 }
 
 function RunCard({ label, run }: { label: string; run: ActivitySummary }) {
-  const stats: [string, string][] = [
-    ["Distance", formatNumber(run.distance_mi, 2, " mi")],
-    ["Time", formatDuration(run.moving_time_s ?? run.duration_s)],
-    ["Pace", formatPace(run.avg_pace_s_per_mi)],
-    ["Avg HR", formatNumber(run.avg_hr, 0, " bpm")],
-    ["Cadence", formatNumber(run.avg_cadence, 0, " spm")],
-    ["Power", formatNumber(run.avg_power, 0, " W")],
-    ["Stride", formatNumber(run.avg_stride_m, 2, " m")],
-    ["Elevation", formatNumber(run.elevation_gain_ft, 0, " ft")],
+  // Each stat keeps its metric color, matching the dots used across the app.
+  const stats: [string, string, string][] = [
+    ["Distance", formatNumber(run.distance_mi, 2, " mi"), "bg-metric-distance"],
+    ["Time", formatDuration(run.moving_time_s ?? run.duration_s), "bg-metric-time"],
+    ["Pace", formatPace(run.avg_pace_s_per_mi), "bg-metric-pace"],
+    ["Avg HR", formatNumber(run.avg_hr, 0, " bpm"), "bg-metric-hr"],
+    ["Cadence", formatNumber(run.avg_cadence, 0, " spm"), "bg-metric-cadence"],
+    ["Power", formatNumber(run.avg_power, 0, " W"), "bg-metric-power"],
+    ["Stride", formatNumber(run.avg_stride_m, 2, " m"), "bg-metric-stride"],
+    ["Elevation", formatNumber(run.elevation_gain_ft, 0, " ft"), "bg-metric-elevation"],
   ];
 
   return (
-    <div className="rounded-lg border border-slate-200 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 font-medium">{run.name ?? "Run"}</p>
-      <p className="text-sm text-slate-600">{formatDate(run.start_time_local)}</p>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm tabular-nums">
-        {stats.map(([name, value]) => (
-          <div key={name} className="flex justify-between gap-2">
-            <dt className="text-slate-500">{name}</dt>
-            <dd>{value}</dd>
+    <div className="card p-5">
+      <p className="eyebrow">{label}</p>
+      <p className="mt-1.5 font-bold">{run.name ?? "Run"}</p>
+      <p className="text-sm text-ink-muted">{formatDate(run.start_time_local)}</p>
+      <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-2 text-sm tabular-nums">
+        {stats.map(([name, value, dot]) => (
+          <div key={name} className="flex items-center justify-between gap-2">
+            <dt className="flex items-center gap-2 text-ink-muted">
+              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+              {name}
+            </dt>
+            <dd className="font-semibold">{value}</dd>
           </div>
         ))}
       </dl>
@@ -73,9 +82,9 @@ function RunCard({ label, run }: { label: string; run: ActivitySummary }) {
 
 // Green/red only where the backend says which way is better; anything else stays neutral.
 const VERDICT_COLORS: Record<string, string> = {
-  improved: "text-emerald-600",
-  declined: "text-rose-600",
-  unchanged: "text-slate-400",
+  improved: "text-good",
+  declined: "text-bad",
+  unchanged: "text-ink-faint",
 };
 
 // Pace is the headline stat for a run, so it gets the large panel when it was recorded.
@@ -92,7 +101,7 @@ function Analytics({ metrics }: { metrics: MetricComparison[] }) {
 
   return (
     <div className="mt-8">
-      <h3 className="font-semibold">Analytics</h3>
+      <h3 className="eyebrow">Analytics</h3>
       {/* The featured stat on the left, the rest in an even grid beside it. */}
       <div className="mt-3 grid gap-3 md:grid-cols-[2fr_3fr]">
         <FeaturedMetric metric={featured} />
@@ -114,10 +123,12 @@ function Analytics({ metrics }: { metrics: MetricComparison[] }) {
 function FeaturedMetric({ metric }: { metric: MetricComparison }) {
   const change = describeChange(metric);
   return (
-    <div className="flex flex-col justify-center rounded-xl border border-slate-200 bg-slate-50 p-6">
-      <p className="text-sm text-slate-500">{metric.label}</p>
-      <p className={`mt-2 text-4xl font-semibold tracking-tight tabular-nums ${change.color}`}>{change.headline}</p>
-      <p className="mt-2 text-sm tabular-nums text-slate-500">{change.detail}</p>
+    <div className="card relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-accent/15 to-transparent p-6 sm:p-7">
+      <p className="text-sm font-medium text-ink-muted">{metric.label}</p>
+      <p className={`mt-2 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl ${change.color}`}>
+        {change.headline}
+      </p>
+      <p className="mt-2 text-sm tabular-nums text-ink-muted">{change.detail}</p>
     </div>
   );
 }
@@ -125,10 +136,10 @@ function FeaturedMetric({ metric }: { metric: MetricComparison }) {
 function MetricCell({ metric }: { metric: MetricComparison }) {
   const change = describeChange(metric);
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
-      <p className="text-xs text-slate-500">{metric.label}</p>
-      <p className={`mt-1 text-xl font-semibold tabular-nums ${change.color}`}>{change.headline}</p>
-      <p className="mt-0.5 text-xs tabular-nums text-slate-400">{change.detail}</p>
+    <div className="card px-4 py-4">
+      <p className="text-xs text-ink-muted">{metric.label}</p>
+      <p className={`mt-1 text-xl font-bold tabular-nums ${change.color}`}>{change.headline}</p>
+      <p className="mt-0.5 text-xs tabular-nums text-ink-faint">{change.detail}</p>
     </div>
   );
 }
@@ -136,7 +147,7 @@ function MetricCell({ metric }: { metric: MetricComparison }) {
 /** Headline (arrow + percent), the change in units underneath, and the color for the headline. */
 function describeChange(metric: MetricComparison) {
   if (metric.change == null) {
-    return { headline: "–", detail: "Not on both runs", color: "text-slate-300" };
+    return { headline: "–", detail: "Not on both runs", color: "text-ink-faint" };
   }
   const arrow = metric.change > 0 ? "↑ " : metric.change < 0 ? "↓ " : "";
   const hasPercent = metric.percent_change != null;
@@ -148,7 +159,7 @@ function describeChange(metric: MetricComparison) {
   return {
     headline: `${arrow}${headline}`,
     detail: hasPercent ? formatMetric(metric, metric.change, true) : " ",
-    color: VERDICT_COLORS[metric.verdict ?? ""] ?? "text-slate-900",
+    color: VERDICT_COLORS[metric.verdict ?? ""] ?? "text-ink",
   };
 }
 
