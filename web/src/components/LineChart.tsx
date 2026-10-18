@@ -146,24 +146,25 @@ export function LineChart({
             const value = s.values[i];
             return value == null ? [] : [{ i, cx, cy: y(value) }];
           });
+          const line = points.map((p, n) => `${n === 0 ? "M" : "L"}${p.cx},${p.cy}`).join("");
+          const first = points[0];
+          const last = points.at(-1);
+          const floor = MARGIN.top + plotHeight;
           return (
             <g key={s.label}>
-              <path
-                d={points.map((p, n) => `${n === 0 ? "M" : "L"}${p.cx},${p.cy}`).join("")}
-                fill="none"
-                stroke={s.color}
-                strokeWidth={2}
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
+              {/* A soft fill under the line, only when it's the one series, so overlapping areas never muddy. */}
+              {series.length === 1 && first && last && (
+                <path d={`${line}L${last.cx},${floor}L${first.cx},${floor}Z`} fill={s.color} fillOpacity={0.1} />
+              )}
+              <path d={line} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
               {points.map((p) => (
                 <circle
                   key={p.i}
                   cx={p.cx}
                   cy={p.cy}
                   r={p.i === active ? 6 : 4}
-                  fill={s.color}
-                  stroke="var(--color-canvas)"
+                  fill={p.i === active ? s.color : "var(--color-surface)"}
+                  stroke={s.color}
                   strokeWidth={2}
                 />
               ))}
@@ -200,7 +201,7 @@ function ChartTooltip({ x, width, children }: { x: number; width: number; childr
     x < edge ? { left: 0 } : x > width - edge ? { right: 0 } : { left: x, transform: "translateX(-50%)" };
   return (
     <div
-      className="pointer-events-none absolute -top-2 z-10 -translate-y-full rounded-lg border border-line-strong bg-[#0f1729] px-3 py-2 whitespace-nowrap shadow-lg"
+      className="pointer-events-none absolute -top-2 z-10 -translate-y-full rounded-xl border border-line-strong bg-surface-raised px-3 py-2 whitespace-nowrap shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]"
       style={placement}
     >
       {children}

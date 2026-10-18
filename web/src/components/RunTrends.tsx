@@ -5,12 +5,12 @@ import { formatDate, formatDuration, formatNumber } from "../format";
 import { LineChart, type ChartSeries } from "./LineChart";
 
 const RANGES = [
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "3m", label: "Last 3 months" },
-  { value: "6m", label: "Last 6 months" },
-  { value: "1y", label: "Last year" },
-  { value: "ytd", label: "Year to date" },
+  { value: "7d", short: "7D", label: "Last 7 days" },
+  { value: "30d", short: "30D", label: "Last 30 days" },
+  { value: "3m", short: "3M", label: "Last 3 months" },
+  { value: "6m", short: "6M", label: "Last 6 months" },
+  { value: "1y", short: "1Y", label: "Last year" },
+  { value: "ytd", short: "YTD", label: "Year to date" },
 ] as const;
 
 type Range = (typeof RANGES)[number]["value"];
@@ -24,31 +24,43 @@ export function RunTrends() {
   const { data, isPending, isError, isPlaceholderData } = useRunTrend(toLocalDate(start));
 
   return (
-    <section id="progress" className="mt-10 scroll-mt-20 sm:mt-14">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section id="progress" aria-labelledby="progress-title" className="scroll-mt-24">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Progress</h2>
-          <p className="mt-1 text-sm text-ink-muted">One dot per run.</p>
+          <h2 id="progress-title" className="section-title">
+            Progress
+          </h2>
+          <p className="mt-1 text-ink-muted">One dot per run.</p>
         </div>
-        <label className="text-sm">
-          <span className="sr-only">Time range</span>
-          <select value={range} onChange={(e) => setRange(e.target.value as Range)} className="field">
-            {RANGES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div role="group" aria-label="Time range" className="flex flex-wrap gap-0.5 rounded-full bg-surface p-1 ring-1 ring-line">
+          {RANGES.map((r) => {
+            const picked = r.value === range;
+            return (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setRange(r.value)}
+                aria-pressed={picked}
+                aria-label={r.label}
+                title={r.label}
+                className={`min-h-9 rounded-full px-3.5 text-[13px] font-bold transition-colors ${
+                  picked ? "bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]" : "text-ink-muted hover:text-ink"
+                }`}
+              >
+                {r.short}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {isPending && <p className="mt-4 text-sm text-ink-faint">Loading…</p>}
-      {isError && <p className="mt-4 text-sm text-bad">Could not load your runs.</p>}
+      {isPending && <p className="mt-5 text-sm text-ink-faint">Loading…</p>}
+      {isError && <p className="mt-5 text-sm text-bad">Could not load your runs.</p>}
       {data && data.length === 0 && (
-        <p className="card mt-4 px-5 py-8 text-center text-sm text-ink-muted">No runs in this range.</p>
+        <p className="card mt-5 px-5 py-10 text-center text-sm text-ink-muted">No runs in this range.</p>
       )}
       {data && data.length > 0 && (
-        <div className={`mt-4 grid gap-4 transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
+        <div className={`mt-5 grid gap-5 lg:grid-cols-2 transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
           <TrendCharts runs={data} start={start} />
         </div>
       )}
@@ -73,7 +85,7 @@ function TrendCharts({ runs, start }: { runs: TrendPoint[]; start: Date }) {
 
   return (
     <>
-      <ChartCard title="Pace" note="Faster is higher">
+      <ChartCard title="Pace" note="Lower is faster">
         {hasValues(pace) ? (
           <LineChart
             label="Average pace of each run over time"
@@ -83,7 +95,6 @@ function TrendCharts({ runs, start }: { runs: TrendPoint[]; start: Date }) {
             series={pace}
             formatValue={(s) => `${formatDuration(s)} /mi`}
             tickSteps={PACE_TICK_STEPS}
-            invert
             describePoint={describeRun}
           />
         ) : (
@@ -119,15 +130,15 @@ type ChartCardProps = {
 
 function ChartCard({ title, note, legend, children }: ChartCardProps) {
   return (
-    <div className="card min-w-0 p-4 sm:p-5">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="font-semibold">{title}</h3>
+    <div className="card min-w-0 p-4 sm:px-6 sm:pt-5 sm:pb-4">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-bold">{title}</h3>
         {note && <p className="text-xs text-ink-faint">{note}</p>}
         {legend && (
           <ul className="flex gap-4 text-xs text-ink-muted">
             {legend.map((s) => (
               <li key={s.label} className="flex items-center gap-1.5">
-                <span className="h-0.5 w-3 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="h-[3px] w-3.5 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}
               </li>
             ))}

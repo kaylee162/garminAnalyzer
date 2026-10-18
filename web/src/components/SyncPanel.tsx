@@ -1,10 +1,8 @@
-import { useRunStats, useSyncNow, useSyncStatus } from "../api/activities";
+import { useSyncNow, useSyncStatus } from "../api/activities";
 import { formatDateTime } from "../format";
 
 export function SyncPanel() {
   const { data: status } = useSyncStatus();
-  // Count runs only, to match the rest of the page; the sync status counts every activity type.
-  const { data: runStats } = useRunStats();
   const sync = useSyncNow();
 
   let summary = "Not synced yet.";
@@ -15,48 +13,35 @@ export function SyncPanel() {
     summary = "Garmin isn't set up yet. Add your login to backend/.env and run the first sync.";
   }
   const greeting = status?.display_name ? `Hi, ${status.display_name}` : "Your training";
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
   return (
-    <section className="card relative overflow-hidden p-5 sm:p-7">
-      {/* A soft glow in the corner, the one decorative touch on the page. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl"
-      />
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="eyebrow">Garmin Connect</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-balance sm:text-3xl">{greeting}</h1>
-          <p className="mt-1 text-sm text-ink-muted">{summary}</p>
-        </div>
-        <div className="flex items-end justify-between gap-6 sm:justify-end">
-          {status?.last_sync_at && runStats && (
-            <div className="sm:text-right">
-              <p className="text-3xl font-extrabold tracking-tight tabular-nums sm:text-4xl">
-                {runStats.count}
-              </p>
-              <p className="text-xs text-ink-faint">{runStats.count === 1 ? "run" : "runs"}</p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => sync.mutate()}
-            disabled={sync.isPending}
-            className="btn btn-primary"
-          >
-            <SyncIcon spinning={sync.isPending} />
-            {sync.isPending ? "Syncing…" : "Sync now"}
-          </button>
-        </div>
-      </div>
-      {sync.isSuccess && (
-        <p className="relative mt-4 text-sm text-good">
-          {sync.data.added === 0
-            ? "Up to date."
-            : `Added ${sync.data.added} new ${sync.data.added === 1 ? "activity" : "activities"}.`}
+    <section aria-label="Overview" className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-xs font-bold tracking-[0.12em] text-accent uppercase">{today}</p>
+        <h1 className="display mt-2.5 text-4xl text-balance sm:text-[3.25rem]">{greeting}</h1>
+        <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted">
+          {status?.last_sync_at && <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-good" />}
+          {summary}
         </p>
-      )}
-      {sync.isError && <p className="relative mt-4 text-sm text-bad">{sync.error.message}</p>}
+        {sync.isSuccess && (
+          <p className="mt-2 text-sm font-semibold text-good">
+            {sync.data.added === 0
+              ? "Up to date."
+              : `Added ${sync.data.added} new ${sync.data.added === 1 ? "activity" : "activities"}.`}
+          </p>
+        )}
+        {sync.isError && <p className="mt-2 text-sm font-semibold text-bad">{sync.error.message}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={() => sync.mutate()}
+        disabled={sync.isPending}
+        className="btn btn-primary min-h-11 self-start px-5 sm:self-auto"
+      >
+        <SyncIcon spinning={sync.isPending} />
+        {sync.isPending ? "Syncing…" : "Sync now"}
+      </button>
     </section>
   );
 }

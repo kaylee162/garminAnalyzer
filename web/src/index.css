@@ -1,41 +1,44 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Dark, layered surfaces over a navy gradient, with color kept for meaning:
- * one accent for actions, green/red for better/worse, and a fixed hue per metric so heart
- * rate, pace, cadence and the rest read the same everywhere.
+ * Design tokens. Near-black neutral surfaces with flat cards and thin borders, and color kept
+ * for meaning: signal orange for actions, selection and pace, blue for heart rate, green/red
+ * for better/worse, and a fixed hue per metric so they read the same everywhere.
  */
 @theme {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-canvas: #060a13;
-  --color-ink: #e9eef6;
-  --color-ink-muted: #9aa8bd;
-  --color-ink-faint: #627089;
-  --color-surface: rgb(255 255 255 / 0.04);
-  --color-surface-raised: rgb(255 255 255 / 0.07);
-  --color-line: rgb(255 255 255 / 0.08);
-  --color-line-strong: rgb(255 255 255 / 0.16);
+  --color-canvas: #0d0e0d;
+  --color-ink: #f2f3f0;
+  --color-ink-muted: #a8ada6;
+  --color-ink-faint: #858a83;
+  --color-surface: #161816;
+  --color-surface-raised: #1e211e;
+  --color-line: #262926;
+  --color-line-strong: #383c38;
 
-  --color-accent: #1fb6ff;
-  --color-accent-deep: #0a84d6;
-  --color-good: #34d399;
-  --color-bad: #fb7185;
+  --color-accent: #ff7a3d;
+  --color-accent-deep: #e8501c;
+  --color-on-accent: #1a0a02;
+  --color-good: #4ade80;
+  --color-bad: #f87171;
   --color-warn: #fbbf24;
 
-  --color-metric-pace: #38bdf8;
-  --color-metric-hr: #f87171;
-  --color-metric-cadence: #fb923c;
-  --color-metric-power: #a78bfa;
-  --color-metric-stride: #2dd4bf;
-  --color-metric-elevation: #4ade80;
-  --color-metric-distance: #60a5fa;
-  --color-metric-time: #f472b6;
+  --color-metric-pace: #ff7a3d;
+  --color-metric-hr: #6b9bff;
+  --color-metric-cadence: #f5b04c;
+  --color-metric-power: #b79cff;
+  --color-metric-stride: #3ccfb4;
+  --color-metric-elevation: #6edb8f;
+  --color-metric-distance: #d9dcd6;
+  --color-metric-time: #f08fc0;
 
-  /* The heart rate chart's two lines. One shade darker than the metric hues so the pair
-     stays easy to tell apart, colorblind or not, on the dark surface. */
-  --color-chart-avg-hr: #3b82f6;
-  --color-chart-max-hr: #ef4444;
+  /* The heart rate chart's two lines: same hue, far apart in lightness, so the pair stays easy
+     to tell apart, colorblind or not. */
+  --color-chart-avg-hr: #4f86f7;
+  --color-chart-max-hr: #a8c3fa;
+
+  --radius-card: 1.25rem;
 }
 
 @layer base {
@@ -51,22 +54,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* The gradient lives on a fixed layer: background-attachment: fixed is ignored on iOS. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(70rem 40rem at 0% -10%, rgb(31 182 255 / 0.2), transparent 60%),
-      radial-gradient(55rem 35rem at 100% 5%, rgb(124 58 237 / 0.16), transparent 60%),
-      radial-gradient(60rem 40rem at 50% 110%, rgb(16 185 129 / 0.08), transparent 60%),
-      linear-gradient(180deg, #0c1528 0%, #070b15 50%, #04060c 100%);
-  }
-
   ::selection {
-    background: rgb(31 182 255 / 0.35);
+    background: rgb(255 122 61 / 0.35);
   }
 
   :focus-visible {
@@ -80,39 +69,63 @@
 }
 
 @utility card {
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-card);
   border: 1px solid var(--color-line);
   background-color: var(--color-surface);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 20px 40px -24px rgb(0 0 0 / 0.6);
 }
 
 @utility eyebrow {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-ink-faint);
 }
 
+/* Big, wide, heavy: the page title and the hero numbers. */
+@utility display {
+  font-weight: 850;
+  font-stretch: 118%;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+@utility section-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-stretch: 112%;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+/* Large stat numbers: slightly wide, tight, with columns that line up. */
+@utility stat-number {
+  font-weight: 800;
+  font-stretch: 105%;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 @utility field {
-  border-radius: var(--radius-lg);
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
   border: 1px solid var(--color-line-strong);
-  background-color: rgb(255 255 255 / 0.05);
+  background-color: var(--color-surface-raised);
   padding: --spacing(2) --spacing(3);
   color: var(--color-ink);
+  font-weight: 600;
   transition: border-color 150ms, background-color 150ms;
 
   &:hover {
-    border-color: rgb(255 255 255 / 0.24);
+    border-color: #4a4f4a;
   }
   &:focus {
     outline: none;
     border-color: var(--color-accent);
-    background-color: rgb(31 182 255 / 0.06);
   }
   & option {
-    background-color: #0f1729;
+    background-color: var(--color-surface-raised);
   }
 }
 
@@ -124,9 +137,9 @@
   border-radius: 9999px;
   padding: --spacing(2) --spacing(4);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
-  transition: background-color 150ms, color 150ms, transform 100ms, opacity 150ms;
+  transition: background-color 150ms, color 150ms, transform 100ms, opacity 150ms, filter 150ms;
 
   &:active:not(:disabled) {
     transform: scale(0.97);
@@ -138,22 +151,22 @@
 }
 
 @utility btn-primary {
-  background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-deep));
-  color: #04121f;
-  box-shadow: 0 8px 24px -10px rgb(31 182 255 / 0.7);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 800;
 
   &:hover:not(:disabled) {
-    filter: brightness(1.1);
+    filter: brightness(1.08);
   }
 }
 
 @utility btn-secondary {
   border: 1px solid var(--color-line-strong);
-  background-color: rgb(255 255 255 / 0.04);
+  background-color: var(--color-surface-raised);
   color: var(--color-ink);
 
   &:hover:not(:disabled) {
-    background-color: rgb(255 255 255 / 0.09);
+    background-color: #272a27;
   }
 }
 
@@ -161,7 +174,7 @@
   color: var(--color-ink-muted);
 
   &:hover:not(:disabled) {
-    background-color: rgb(255 255 255 / 0.06);
+    background-color: var(--color-surface-raised);
     color: var(--color-ink);
   }
 }
