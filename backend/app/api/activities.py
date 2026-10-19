@@ -15,7 +15,7 @@ from app.units import meters_to_feet, meters_to_miles, pace_s_per_mile
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 
-Sport = Literal["run", "bike", "other"]
+Sport = Literal["run", "walk", "bike", "swim", "other"]
 
 
 class ActivitySummary(BaseModel):

@@ -11,6 +11,10 @@ def test_sport_groups_garmin_types():
     assert sport_for("road_biking") == "bike"
     assert sport_for("indoor_cycling") == "bike"
     assert sport_for("virtual_ride") == "bike"
+    assert sport_for("walking") == "walk"
+    assert sport_for("speed_walking") == "walk"
+    assert sport_for("lap_swimming") == "swim"
+    assert sport_for("open_water_swimming") == "swim"
     assert sport_for("strength_training") == "other"
 
 
@@ -44,7 +48,7 @@ def test_normalize_handles_missing_metrics():
 def test_runs_slower_than_16_min_per_mile_are_walks():
     # 1 mile in 16:30 of moving time: a walk tracked as a run.
     walk = garmin_activity(8, "2026-10-01 12:30:00", distance=1609.344, movingDuration=990.0)
-    assert normalize_activity(walk)["sport"] == "other"
+    assert normalize_activity(walk)["sport"] == "walk"
     assert normalize_activity(walk)["activity_type"] == "running"
 
     # Exactly 16:00 still counts as a run.
@@ -54,7 +58,7 @@ def test_runs_slower_than_16_min_per_mile_are_walks():
     # No moving time: fall back to total time.
     no_moving = garmin_activity(10, "2026-10-01 12:30:00", distance=1609.344, duration=1200.0)
     no_moving.pop("movingDuration")
-    assert normalize_activity(no_moving)["sport"] == "other"
+    assert normalize_activity(no_moving)["sport"] == "walk"
 
     # No distance (e.g. a treadmill without a foot pod): no pace to judge, keep it a run.
     no_distance = garmin_activity(11, "2026-10-01 12:30:00", movingDuration=3000.0)

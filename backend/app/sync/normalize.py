@@ -9,17 +9,21 @@ from typing import Any
 _TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 _METERS_PER_MILE = 1609.344
 # Runs slower than 16:00 per mile are almost always walks recorded as runs. They are kept,
-# but grouped as "other" so they stay out of run lists, comparisons and training plans.
+# but grouped as "walk" so they stay out of run lists, comparisons and training plans.
 MAX_RUN_PACE_S_PER_MI = 16 * 60
 
 
 def sport_for(activity_type: str) -> str:
-    """Group Garmin's many activity types into "run", "bike" or "other"."""
+    """Group Garmin's many activity types into "run", "walk", "bike", "swim" or "other"."""
     key = activity_type.lower()
     if "run" in key:  # running, trail_running, treadmill_running, track_running, ...
         return "run"
+    if "walk" in key:  # walking, casual_walking, speed_walking, ...
+        return "walk"
     if "cycl" in key or "bik" in key or "ride" in key:  # cycling, road_biking, virtual_ride
         return "bike"
+    if "swim" in key:  # lap_swimming, open_water_swimming
+        return "swim"
     return "other"
 
 
@@ -46,7 +50,7 @@ def normalize_activity(raw: dict[str, Any]) -> dict[str, Any]:
     sport = sport_for(activity_type)
     # Same pace the app shows: moving time, falling back to total time.
     if sport == "run" and is_walking_pace(distance_m, moving_time_s or duration_s):
-        sport = "other"
+        sport = "walk"
     return {
         "garmin_id": int(raw["activityId"]),
         "name": raw.get("activityName"),
