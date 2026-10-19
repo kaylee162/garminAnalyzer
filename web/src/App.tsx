@@ -1,63 +1,73 @@
-import { useState } from "react";
+import { useSyncExternalStore, type ComponentType } from "react";
 import { useHealth } from "./api/health";
-import { OverallStats } from "./components/OverallStats";
-import { RecentRuns } from "./components/RecentRuns";
-import { RunTrends } from "./components/RunTrends";
-import { RunComparison } from "./components/RunComparison";
-import { SyncPanel } from "./components/SyncPanel";
-import { TrainingPlan } from "./components/TrainingPlan";
+import { BikingPage } from "./pages/biking/BikingPage";
+import { RunningPage } from "./pages/running/RunningPage";
+import { SwimmingPage } from "./pages/swimming/SwimmingPage";
+import { WalkingPage } from "./pages/walking/WalkingPage";
 
-const NAV_LINKS = [
-  { href: "#progress", label: "Progress" },
-  { href: "#runs", label: "Runs" },
-  { href: "#plan", label: "Plan" },
+type Route = {
+  hash: string;
+  label: string;
+  Page: ComponentType;
+};
+
+// The first route is the home page, shown when the URL has no matching hash.
+const ROUTES: Route[] = [
+  { hash: "#/running", label: "Running", Page: RunningPage },
+  { hash: "#/walking", label: "Walking", Page: WalkingPage },
+  { hash: "#/biking", label: "Biking", Page: BikingPage },
+  { hash: "#/swimming", label: "Swimming", Page: SwimmingPage },
 ];
 
 export function App() {
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-  // Keep at most two runs picked: ticking a third replaces the one picked first.
-  const toggleRun = (id: number) =>
-    setSelectedIds((ids) =>
-      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id].slice(-2),
-    );
+  const route = useRoute();
 
   return (
     <>
-      <Header />
+      <Header current={route} />
       <main className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pt-8 pb-24 sm:gap-16 sm:px-8 sm:pt-12">
         <ApiErrorBanner />
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <SyncPanel />
-          <OverallStats />
-        </div>
-        <RunTrends />
-        <RecentRuns selectedIds={selectedIds} onToggle={toggleRun} />
-        <RunComparison selectedIds={selectedIds} onClear={() => setSelectedIds([])} />
-        <TrainingPlan />
+        <route.Page />
       </main>
     </>
   );
 }
 
-function Header() {
+/** The route matching the URL hash, kept in sync as the hash changes. */
+function useRoute(): Route {
+  const hash = useSyncExternalStore(subscribeToHash, () => window.location.hash);
+  return ROUTES.find((r) => r.hash === hash) ?? ROUTES[0]!;
+}
+
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+function Header({ current }: { current: Route }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-canvas/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-8">
-        <a href="#" className="flex items-center gap-2.5">
+        <a href={ROUTES[0]!.hash} className="flex items-center gap-2.5">
           <LogoMark />
           <span className="text-[15px] font-extrabold tracking-tight [font-stretch:112%]">Garmin Analyzer</span>
         </a>
-        <nav aria-label="Sections" className="ml-auto flex items-center gap-0.5 text-sm">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3.5 py-2 font-semibold text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink"
-            >
-              {link.label}
-            </a>
-          ))}
+        <nav aria-label="Sports" className="ml-auto flex items-center gap-0.5 text-sm">
+          {ROUTES.map((route) => {
+            const active = route === current;
+            return (
+              <a
+                key={route.hash}
+                href={route.hash}
+                aria-current={active ? "page" : undefined}
+                className={`rounded-full px-3.5 py-2 font-semibold transition-colors hover:bg-surface-raised hover:text-ink ${
+                  active ? "bg-surface-raised text-ink" : "text-ink-muted"
+                }`}
+              >
+                {route.label}
+              </a>
+            );
+          })}
         </nav>
       </div>
     </header>

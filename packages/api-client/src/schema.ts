@@ -687,7 +687,7 @@ export interface operations {
     listActivities: {
         parameters: {
             query?: {
-                sport?: ("run" | "bike" | "other") | null;
+                sport?: ("run" | "walk" | "bike" | "swim" | "other") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -720,7 +720,7 @@ export interface operations {
     getActivityStats: {
         parameters: {
             query?: {
-                sport?: "run" | "bike" | "other";
+                sport?: "run" | "walk" | "bike" | "swim" | "other";
             };
             header?: never;
             path?: never;
@@ -753,7 +753,7 @@ export interface operations {
             query: {
                 /** @description First local date to include */
                 since: string;
-                sport?: "run" | "bike" | "other";
+                sport?: "run" | "walk" | "bike" | "swim" | "other";
             };
             header?: never;
             path?: never;

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { TrendPoint } from "@garmin-analyzer/api-client";
-import { useRunTrend } from "../api/activities";
-import { formatDate, formatDuration, formatNumber } from "../format";
+import { useActivityTrend } from "../api/activities";
+import { formatDate, formatNumber } from "../format";
+import { capitalize, type SportConfig } from "../sports";
 import { LineChart, type ChartSeries } from "./LineChart";
 
 const RANGES = [
@@ -15,22 +16,22 @@ const RANGES = [
 
 type Range = (typeof RANGES)[number]["value"];
 
-const PACE_TICK_STEPS = [5, 10, 15, 30, 60, 120, 300];
 const HR_TICK_STEPS = [2, 5, 10, 20, 50];
 
-export function RunTrends() {
+export function ActivityTrends({ config }: { config: SportConfig }) {
   const [range, setRange] = useState<Range>("30d");
   const start = rangeStart(range, new Date());
-  const { data, isPending, isError, isPlaceholderData } = useRunTrend(toLocalDate(start));
+  const { data, isPending, isError, isPlaceholderData } = useActivityTrend(config.sport, toLocalDate(start));
+  const titleId = `${config.sport}-progress-title`;
 
   return (
-    <section id="progress" aria-labelledby="progress-title" className="scroll-mt-24">
+    <section aria-labelledby={titleId}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 id="progress-title" className="section-title">
+          <h2 id={titleId} className="section-title">
             Progress
           </h2>
-          <p className="mt-1 text-ink-muted">One dot per run.</p>
+          <p className="mt-1 text-ink-muted">One dot per {config.noun}.</p>
         </div>
         <div role="group" aria-label="Time range" className="flex flex-wrap gap-0.5 rounded-full bg-surface p-1 ring-1 ring-line">
           {RANGES.map((r) => {
@@ -55,66 +56,77 @@ export function RunTrends() {
       </div>
 
       {isPending && <p className="mt-5 text-sm text-ink-faint">Loading…</p>}
-      {isError && <p className="mt-5 text-sm text-bad">Could not load your runs.</p>}
+      {isError && <p className="mt-5 text-sm text-bad">Could not load your {config.nounPlural}.</p>}
       {data && data.length === 0 && (
-        <p className="card mt-5 px-5 py-10 text-center text-sm text-ink-muted">No runs in this range.</p>
+        <p className="card mt-5 px-5 py-10 text-center text-sm text-ink-muted">No {config.nounPlural} in this range.</p>
       )}
       {data && data.length > 0 && (
         <div className={`mt-5 grid gap-5 lg:grid-cols-2 transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
-          <TrendCharts runs={data} start={start} />
+          <TrendCharts config={config} points={data} start={start} />
         </div>
       )}
     </section>
   );
 }
 
-function TrendCharts({ runs, start }: { runs: TrendPoint[]; start: Date }) {
-  const dates = runs.map((r) => new Date(r.start_time_local));
+type TrendChartsProps = {
+  config: SportConfig;
+  points: TrendPoint[];
+  start: Date;
+};
+
+function TrendCharts({ config, points, start }: TrendChartsProps) {
+  const { noun, speed } = config;
+  const dates = points.map((p) => new Date(p.start_time_local));
   const end = new Date();
-  const describeRun = (i: number) => {
-    const run = runs[i];
-    return run ? `${formatDate(run.start_time_local)} · ${run.name ?? "Run"}` : "";
+  const describePoint = (i: number) => {
+    const point = points[i];
+    return point ? `${formatDate(point.start_time_local)} · ${point.name ?? capitalize(noun)}` : "";
   };
-  const pace: ChartSeries[] = [
-    { label: "pace", color: "var(--color-metric-pace)", values: runs.map((r) => r.avg_pace_s_per_mi) },
+  const speedSeries: ChartSeries[] = [
+    {
+      label: speed.label.toLowerCase(),
+      color: "var(--color-metric-pace)",
+      values: points.map((p) => (p.avg_pace_s_per_mi == null ? null : speed.fromPace(p.avg_pace_s_per_mi))),
+    },
   ];
   const heartRate: ChartSeries[] = [
-    { label: "avg HR", color: "var(--color-chart-avg-hr)", values: runs.map((r) => r.avg_hr) },
-    { label: "max HR", color: "var(--color-chart-max-hr)", values: runs.map((r) => r.max_hr) },
+    { label: "avg HR", color: "var(--color-chart-avg-hr)", values: points.map((p) => p.avg_hr) },
+    { label: "max HR", color: "var(--color-chart-max-hr)", values: points.map((p) => p.max_hr) },
   ];
 
   return (
     <>
-      <ChartCard title="Pace" note="Lower is faster">
-        {hasValues(pace) ? (
+      <ChartCard title={speed.label} note={speed.better === "lower" ? "Lower is faster" : "Higher is faster"}>
+        {hasValues(speedSeries) ? (
           <LineChart
-            label="Average pace of each run over time"
+            label={`Average ${speed.label.toLowerCase()} of each ${noun} over time`}
             dates={dates}
             start={start}
             end={end}
-            series={pace}
-            formatValue={(s) => `${formatDuration(s)} /mi`}
-            tickSteps={PACE_TICK_STEPS}
-            describePoint={describeRun}
+            series={speedSeries}
+            formatValue={(value) => `${speed.format(value)} ${speed.unit}`}
+            tickSteps={speed.tickSteps}
+            describePoint={describePoint}
           />
         ) : (
-          <NoData />
+          <NoData nounPlural={config.nounPlural} />
         )}
       </ChartCard>
       <ChartCard title="Heart rate" legend={heartRate}>
         {hasValues(heartRate) ? (
           <LineChart
-            label="Average and max heart rate of each run over time"
+            label={`Average and max heart rate of each ${noun} over time`}
             dates={dates}
             start={start}
             end={end}
             series={heartRate}
             formatValue={(bpm) => formatNumber(bpm, 0, " bpm")}
             tickSteps={HR_TICK_STEPS}
-            describePoint={describeRun}
+            describePoint={describePoint}
           />
         ) : (
-          <NoData />
+          <NoData nounPlural={config.nounPlural} />
         )}
       </ChartCard>
     </>
@@ -150,8 +162,8 @@ function ChartCard({ title, note, legend, children }: ChartCardProps) {
   );
 }
 
-function NoData() {
-  return <p className="py-10 text-center text-sm text-ink-faint">None of these runs recorded this.</p>;
+function NoData({ nounPlural }: { nounPlural: string }) {
+  return <p className="py-10 text-center text-sm text-ink-faint">None of these {nounPlural} recorded this.</p>;
 }
 
 function hasValues(series: ChartSeries[]) {

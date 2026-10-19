@@ -21,7 +21,7 @@ class Activity(TimestampMixin, Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     garmin_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     name: Mapped[str | None] = mapped_column(String(200))
-    # Broad group used for filtering: "run", "bike" or "other".
+    # Broad group used for filtering: "run", "walk", "bike", "swim" or "other".
     sport: Mapped[str] = mapped_column(String(20), index=True)
     # Garmin's own type key, e.g. "running", "treadmill_running", "trail_running".
     activity_type: Mapped[str] = mapped_column(String(50))

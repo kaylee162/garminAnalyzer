@@ -44,7 +44,9 @@
                 {
                   "enum": [
                     "run",
+                    "walk",
                     "bike",
+                    "swim",
                     "other"
                   ],
                   "type": "string"
@@ -119,7 +121,9 @@
             "schema": {
               "enum": [
                 "run",
+                "walk",
                 "bike",
+                "swim",
                 "other"
               ],
               "type": "string",
@@ -180,7 +184,9 @@
             "schema": {
               "enum": [
                 "run",
+                "walk",
                 "bike",
+                "swim",
                 "other"
               ],
               "type": "string",

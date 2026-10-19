@@ -1,28 +1,30 @@
-import { useRunStats } from "../api/activities";
-import { formatDuration, formatNumber } from "../format";
+import { useActivityStats } from "../api/activities";
+import { formatNumber } from "../format";
+import { capitalize, type SportConfig } from "../sports";
 
-export function OverallStats() {
-  const { data, isError } = useRunStats();
+export function OverallStats({ config }: { config: SportConfig }) {
+  const { data, isError } = useActivityStats(config.sport);
+  const { speed, distance } = config;
 
-  if (isError) return <p className="text-sm text-bad">Could not load run averages.</p>;
+  if (isError) return <p className="text-sm text-bad">Could not load {config.noun} averages.</p>;
 
   return (
     // One strip split by 1px gaps, so the dividers come from the grid's background.
     <section
-      aria-label="Averages across all runs"
+      aria-label={`Averages across all ${config.nounPlural}`}
       className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line lg:grid-cols-4"
     >
-      <StatCard title="Runs logged" value={data && String(data.count)} />
+      <StatCard title={`${capitalize(config.nounPlural)} logged`} value={data && String(data.count)} />
       <StatCard
-        title="Avg pace"
-        value={data && formatDuration(data.avg_pace_s_per_mi)}
-        unit="/mi"
+        title={`Avg ${speed.label.toLowerCase()}`}
+        value={data && (data.avg_pace_s_per_mi == null ? "–" : speed.format(speed.fromPace(data.avg_pace_s_per_mi)))}
+        unit={speed.unit}
         swatch="bg-metric-pace"
       />
       <StatCard
         title="Avg distance"
-        value={data && formatNumber(data.avg_distance_mi, 2)}
-        unit="mi"
+        value={data && (data.avg_distance_mi == null ? "–" : formatNumber(distance.fromMiles(data.avg_distance_mi), distance.digits))}
+        unit={distance.unit}
         swatch="bg-metric-distance"
       />
       <StatCard title="Avg heart rate" value={data && formatNumber(data.avg_hr, 0)} unit="bpm" swatch="bg-metric-hr" />

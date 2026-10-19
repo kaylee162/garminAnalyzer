@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { ActivitySummary } from "@garmin-analyzer/api-client";
-import { useActivityDetails, useAllRuns } from "../api/activities";
-import { formatDate, formatDuration, formatNumber, formatPace } from "../format";
+import { useActivityDetails, useAllActivities } from "../api/activities";
+import { formatDate, formatDuration, formatNumber } from "../format";
+import { capitalize, formatDistance, formatSpeed, type SportConfig } from "../sports";
 
-type RecentRunsProps = {
+type ActivityListProps = {
+  config: SportConfig;
   selectedIds: number[];
   onToggle: (id: number) => void;
 };
@@ -11,20 +13,21 @@ type RecentRunsProps = {
 const COLUMN_COUNT = 7;
 const COLLAPSED_COUNT = 3;
 
-export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
-  const { data, isPending, isError } = useAllRuns();
+export function ActivityList({ config, selectedIds, onToggle }: ActivityListProps) {
+  const { data, isPending, isError } = useAllActivities(config.sport);
   const [showAll, setShowAll] = useState(false);
-  const runs = data ?? [];
-  const visibleRuns = showAll ? runs : runs.slice(0, COLLAPSED_COUNT);
+  const activities = data ?? [];
+  const visibleActivities = showAll ? activities : activities.slice(0, COLLAPSED_COUNT);
+  const titleId = `${config.sport}-list-title`;
 
   return (
-    <section id="runs" aria-labelledby="runs-title" className="scroll-mt-24">
+    <section aria-labelledby={titleId}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 id="runs-title" className="section-title">
-            Recent runs
+          <h2 id={titleId} className="section-title">
+            Recent {config.nounPlural}
           </h2>
-          <p className="mt-1 text-ink-muted">Tick two runs to compare them.</p>
+          <p className="mt-1 text-ink-muted">Tick two {config.nounPlural} to compare them.</p>
         </div>
         {selectedIds.length > 0 && (
           <span className="rounded-full bg-accent/15 px-3.5 py-2 text-[13px] font-bold text-accent">
@@ -33,13 +36,13 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
         )}
       </div>
       {isPending && <p className="mt-5 text-sm text-ink-faint">Loading…</p>}
-      {isError && <p className="mt-5 text-sm text-bad">Could not load runs.</p>}
+      {isError && <p className="mt-5 text-sm text-bad">Could not load {config.nounPlural}.</p>}
       {data && data.length === 0 && (
         <p className="card mt-5 px-5 py-10 text-center text-sm text-ink-muted">
-          No runs yet. Sync with Garmin to pull them in.
+          No {config.nounPlural} yet. Sync with Garmin to pull them in.
         </p>
       )}
-      {runs.length > 0 && (
+      {activities.length > 0 && (
         <div className="card mt-5 overflow-hidden">
           <table className="w-full text-[15px] tabular-nums">
             <thead className="text-left text-xs font-bold tracking-wider whitespace-nowrap text-ink-faint uppercase">
@@ -47,10 +50,10 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
                 <th className="w-10 py-3.5 pr-1 pl-4 sm:pl-6">
                   <span className="sr-only">Compare</span>
                 </th>
-                <th className="px-3 py-3.5 font-bold">Run</th>
+                <th className="px-3 py-3.5 font-bold">{capitalize(config.noun)}</th>
                 <th className="px-3 py-3.5 text-right font-bold">Distance</th>
                 <th className="py-3.5 pr-1 pl-3 text-right font-bold sm:px-3">Time</th>
-                <th className="hidden px-3 py-3.5 text-right font-bold md:table-cell">Pace</th>
+                <th className="hidden px-3 py-3.5 text-right font-bold md:table-cell">{config.speed.label}</th>
                 <th className="hidden px-3 py-3.5 text-right font-bold md:table-cell">Avg HR</th>
                 <th className="w-14 py-3.5 pr-3 pl-1 sm:pr-5">
                   <span className="sr-only">Details</span>
@@ -58,17 +61,18 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
               </tr>
             </thead>
             <tbody>
-              {visibleRuns.map((run) => (
-                <RunRow
-                  key={run.id}
-                  run={run}
-                  selected={selectedIds.includes(run.id)}
-                  onToggle={() => onToggle(run.id)}
+              {visibleActivities.map((activity) => (
+                <ActivityRow
+                  key={activity.id}
+                  config={config}
+                  activity={activity}
+                  selected={selectedIds.includes(activity.id)}
+                  onToggle={() => onToggle(activity.id)}
                 />
               ))}
             </tbody>
           </table>
-          {runs.length > COLLAPSED_COUNT && (
+          {activities.length > COLLAPSED_COUNT && (
             <div className="border-t border-line p-2 text-center">
               <button
                 type="button"
@@ -76,7 +80,7 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
                 aria-expanded={showAll}
                 className="btn btn-ghost min-h-11 w-full rounded-xl text-ink"
               >
-                {showAll ? "Show fewer" : `Show all ${runs.length} runs`}
+                {showAll ? "Show fewer" : `Show all ${activities.length} ${config.nounPlural}`}
               </button>
             </div>
           )}
@@ -86,16 +90,17 @@ export function RecentRuns({ selectedIds, onToggle }: RecentRunsProps) {
   );
 }
 
-type RunRowProps = {
-  run: ActivitySummary;
+type ActivityRowProps = {
+  config: SportConfig;
+  activity: ActivitySummary;
   selected: boolean;
   onToggle: () => void;
 };
 
-function RunRow({ run, selected, onToggle }: RunRowProps) {
+function ActivityRow({ config, activity, selected, onToggle }: ActivityRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const name = run.name ?? "Run";
-  const date = formatDate(run.start_time_local);
+  const name = activity.name ?? capitalize(config.noun);
+  const date = formatDate(activity.start_time_local);
 
   return (
     <>
@@ -115,15 +120,15 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
           <p className="font-bold">{name}</p>
           <p className="mt-0.5 text-[13px] text-ink-faint">{date}</p>
         </td>
-        <td className="px-3 py-3.5 text-right font-bold whitespace-nowrap">{formatNumber(run.distance_mi, 2, " mi")}</td>
+        <td className="px-3 py-3.5 text-right font-bold whitespace-nowrap">{formatDistance(config, activity.distance_mi)}</td>
         <td className="py-3.5 pr-1 pl-3 text-right whitespace-nowrap text-ink-muted sm:px-3">
-          {formatDuration(run.moving_time_s ?? run.duration_s)}
+          {formatDuration(activity.moving_time_s ?? activity.duration_s)}
         </td>
         <td className="hidden px-3 py-3.5 text-right whitespace-nowrap text-ink-muted md:table-cell">
-          {formatPace(run.avg_pace_s_per_mi)}
+          {formatSpeed(config, activity.avg_pace_s_per_mi)}
         </td>
         <td className="hidden px-3 py-3.5 text-right whitespace-nowrap text-ink-muted md:table-cell">
-          {formatNumber(run.avg_hr, 0)}
+          {formatNumber(activity.avg_hr, 0)}
         </td>
         <td className="py-1.5 pr-3 pl-1 text-right sm:pr-5">
           <button
@@ -153,7 +158,7 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
       {expanded && (
         <tr className="bg-canvas/40">
           <td colSpan={COLUMN_COUNT} className="px-4 pt-2 pb-6 sm:pr-6 sm:pl-16">
-            <RunDetails id={run.id} />
+            <ActivityDetails id={activity.id} noun={config.noun} />
           </td>
         </tr>
       )}
@@ -161,11 +166,11 @@ function RunRow({ run, selected, onToggle }: RunRowProps) {
   );
 }
 
-function RunDetails({ id }: { id: number }) {
+function ActivityDetails({ id, noun }: { id: number; noun: string }) {
   const { data, isPending, isError } = useActivityDetails(id, true);
 
   if (isPending) return <p className="text-ink-faint">Loading details…</p>;
-  if (isError) return <p className="text-bad">Could not load details for this run.</p>;
+  if (isError) return <p className="text-bad">Could not load details for this {noun}.</p>;
 
   return (
     <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
