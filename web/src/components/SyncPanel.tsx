@@ -19,7 +19,7 @@ export function SyncPanel() {
     <section aria-label="Overview" className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <p className="text-xs font-bold tracking-[0.12em] text-accent uppercase">{today}</p>
-        <h1 className="display mt-2.5 text-4xl text-balance sm:text-[3.25rem]">{greeting}</h1>
+        <h1 className="display mt-2.5 text-4xl text-balance break-words sm:text-[3.25rem]">{greeting}</h1>
         <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted">
           {status?.last_sync_at && <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-good" />}
           {summary}
@@ -37,7 +37,7 @@ export function SyncPanel() {
         type="button"
         onClick={() => sync.mutate()}
         disabled={sync.isPending}
-        className="btn btn-primary min-h-11 self-start px-5 sm:self-auto"
+        className="btn btn-primary min-h-11 w-full px-5 sm:w-auto"
       >
         <SyncIcon spinning={sync.isPending} />
         {sync.isPending ? "Syncing…" : "Sync now"}

@@ -26,8 +26,12 @@ type LineChartProps = {
 };
 
 const HEIGHT = 220;
-const MARGIN = { top: 12, right: 16, bottom: 28, left: 60 };
-const X_TICK_COUNT = 5;
+const MARGIN = { top: 12, right: 16, bottom: 28 };
+// Gap between the y labels and the plot, and a rough width per character of the 11px labels.
+const Y_LABEL_GAP = 8;
+const Y_LABEL_CHAR_WIDTH = 6.2;
+// Fewer date labels on narrow charts, so they never run into each other.
+const NARROW_CHART = 420;
 const DAY_MS = 86_400_000;
 
 export function LineChart({
@@ -45,14 +49,18 @@ export function LineChart({
   const width = useWidth(containerRef);
   const [active, setActive] = useState<number | null>(null);
 
-  const plotWidth = Math.max(width - MARGIN.left - MARGIN.right, 1);
+  const allValues = series.flatMap((s) => s.values.filter((v): v is number => v != null));
+  const yTicks = niceTicks(Math.min(...allValues), Math.max(...allValues), tickSteps);
+  // The plot starts just right of the widest y label, so long units like "/100yd" aren't cut off.
+  const longestLabel = Math.max(...yTicks.map((tick) => formatValue(tick).length), 1);
+  const marginLeft = Math.ceil(longestLabel * Y_LABEL_CHAR_WIDTH) + Y_LABEL_GAP;
+
+  const plotWidth = Math.max(width - marginLeft - MARGIN.right, 1);
   const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
   const startMs = start.getTime();
   const spanMs = Math.max(end.getTime() - startMs, 1);
-  const x = (date: Date) => MARGIN.left + ((date.getTime() - startMs) / spanMs) * plotWidth;
+  const x = (date: Date) => marginLeft + ((date.getTime() - startMs) / spanMs) * plotWidth;
 
-  const allValues = series.flatMap((s) => s.values.filter((v): v is number => v != null));
-  const yTicks = niceTicks(Math.min(...allValues), Math.max(...allValues), tickSteps);
   const yLow = yTicks[0] ?? 0;
   const yHigh = yTicks.at(-1) ?? yLow + 1;
   const y = (value: number) => {
@@ -60,9 +68,10 @@ export function LineChart({
     return MARGIN.top + (invert ? share : 1 - share) * plotHeight;
   };
 
+  const xTickCount = width < NARROW_CHART ? 3 : 5;
   const xTicks = Array.from(
-    { length: X_TICK_COUNT },
-    (_, i) => new Date(startMs + (spanMs * i) / (X_TICK_COUNT - 1)),
+    { length: xTickCount },
+    (_, i) => new Date(startMs + (spanMs * i) / (xTickCount - 1)),
   );
   const monthsOnly = spanMs > 120 * DAY_MS;
 
@@ -106,14 +115,14 @@ export function LineChart({
         {yTicks.map((tick) => (
           <g key={tick}>
             <line
-              x1={MARGIN.left}
+              x1={marginLeft}
               x2={width - MARGIN.right}
               y1={y(tick)}
               y2={y(tick)}
               stroke="var(--color-line)"
               strokeWidth={1}
             />
-            <text x={MARGIN.left - 8} y={y(tick)} dy="0.32em" textAnchor="end" className="fill-ink-faint text-[11px]">
+            <text x={marginLeft - Y_LABEL_GAP} y={y(tick)} dy="0.32em" textAnchor="end" className="fill-ink-faint text-[11px]">
               {formatValue(tick)}
             </text>
           </g>
@@ -123,7 +132,7 @@ export function LineChart({
             key={tick.getTime()}
             x={x(tick)}
             y={HEIGHT - 8}
-            textAnchor={i === 0 ? "start" : i === X_TICK_COUNT - 1 ? "end" : "middle"}
+            textAnchor={i === 0 ? "start" : i === xTickCount - 1 ? "end" : "middle"}
             className="fill-ink-faint text-[11px]"
           >
             {tick.toLocaleDateString(undefined, monthsOnly ? { month: "short" } : { month: "short", day: "numeric" })}
@@ -175,13 +184,13 @@ export function LineChart({
 
       {active !== null && activeX !== undefined && (
         <ChartTooltip x={activeX} width={width}>
-          <p className="text-xs text-ink-muted">{describePoint(active)}</p>
+          <p className="truncate text-xs text-ink-muted">{describePoint(active)}</p>
           {series.map((s) => {
             const value = s.values[active];
             return (
               <p key={s.label} className="mt-1 flex items-center gap-2 text-xs">
                 <span className="h-0.5 w-3 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="font-semibold text-ink tabular-nums">
+                <span className="font-semibold whitespace-nowrap text-ink tabular-nums">
                   {value == null ? "–" : formatValue(value)}
                 </span>
                 <span className="text-ink-faint">{s.label}</span>
@@ -195,14 +204,20 @@ export function LineChart({
 }
 
 function ChartTooltip({ x, width, children }: { x: number; width: number; children: React.ReactNode }) {
-  // Pin the tooltip to the chart's edge instead of letting it hang off the side.
-  const edge = 90;
-  const placement =
-    x < edge ? { left: 0 } : x > width - edge ? { right: 0 } : { left: x, transform: "translateX(-50%)" };
+  const ref = useRef<HTMLDivElement>(null);
+  // Center the tooltip on the point, but slide it back inside the chart near either edge. It is
+  // measured before paint, so it never flashes in the wrong spot.
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const tooltipWidth = element.offsetWidth;
+    const left = Math.min(Math.max(x - tooltipWidth / 2, 0), Math.max(width - tooltipWidth, 0));
+    element.style.left = `${left}px`;
+  });
   return (
     <div
-      className="pointer-events-none absolute -top-2 z-10 -translate-y-full rounded-xl border border-line-strong bg-surface-raised px-3 py-2 whitespace-nowrap shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]"
-      style={placement}
+      ref={ref}
+      className="pointer-events-none absolute -top-2 left-0 z-10 w-max max-w-full -translate-y-full rounded-xl border border-line-strong bg-surface-raised px-3 py-2 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.8)]"
     >
       {children}
     </div>

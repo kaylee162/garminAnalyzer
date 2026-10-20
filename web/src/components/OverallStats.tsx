@@ -43,15 +43,16 @@ type StatCardProps = {
 function StatCard({ title, value, unit, swatch }: StatCardProps) {
   const missing = value === undefined || value === "–";
   return (
-    <div className="bg-surface px-4 py-5 sm:px-6 sm:py-6">
+    <div className="min-w-0 bg-surface px-4 py-5 sm:px-6 sm:py-6">
       <p className="flex items-center gap-2 text-xs font-semibold text-ink-muted sm:text-[13px]">
         {swatch && <span aria-hidden="true" className={`h-[3px] w-2.5 shrink-0 rounded-full ${swatch}`} />}
         {title}
       </p>
-      <p className="stat-number mt-3 text-[1.75rem] sm:text-[2.5rem]">
+      {/* Long units (e.g. "/100yd") drop under the number on narrow cards instead of spilling out. */}
+      <p className="stat-number mt-3 flex flex-wrap items-baseline gap-x-1 gap-y-1 text-[1.75rem] sm:text-[2.5rem]">
         {value === undefined ? <span className="text-ink-faint">…</span> : value}
         {unit && !missing && (
-          <span className="ml-1 text-sm font-semibold tracking-normal text-ink-muted sm:text-base">{unit}</span>
+          <span className="text-sm font-semibold tracking-normal text-ink-muted sm:text-base">{unit}</span>
         )}
       </p>
     </div>
