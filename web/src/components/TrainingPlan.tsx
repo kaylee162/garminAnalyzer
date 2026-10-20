@@ -165,7 +165,7 @@ export function TrainingPlan() {
             value={raceDate}
             min={toIsoDate(addDays(new Date(), 1))}
             onChange={(e) => setRaceDate(e.target.value)}
-            className="field"
+            className="field w-full min-w-0"
           />
         </label>
         <button type="submit" disabled={build.isPending} className="btn btn-primary min-h-11 px-6 sm:ml-auto">
@@ -212,7 +212,7 @@ function SavedPlans({
             className={`flex items-center gap-2 px-4 py-3 text-sm sm:gap-3 sm:px-6 ${p.id === activeId ? "bg-accent/[0.07] shadow-[inset_3px_0_0_var(--color-accent)]" : ""}`}
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold">{p.name}</p>
+              <p className="truncate font-semibold" title={p.name}>{p.name}</p>
               <p className="text-xs text-ink-faint">
                 {raceLabel(p.race)} · race day {formatPlanDate(p.race_date)}
               </p>
@@ -266,7 +266,7 @@ function SaveBar({
         }}
         className="flex flex-wrap items-end gap-3"
       >
-        <label className="flex min-w-48 flex-1 flex-col gap-1.5 text-[15px]">
+        <label className="flex min-w-0 basis-full flex-col gap-1.5 text-[15px] sm:min-w-48 sm:basis-0 sm:flex-1">
           <span className="text-[13px] font-semibold text-ink-muted">Plan name</span>
           <input
             required
@@ -280,7 +280,7 @@ function SaveBar({
           <span className={`h-2 w-2 rounded-full ${upToDate ? "bg-good" : "bg-warn"}`} />
           {status}
         </span>
-        <button type="submit" disabled={saving || upToDate} className="btn btn-primary min-h-11 px-6">
+        <button type="submit" disabled={saving || upToDate} className="btn btn-primary ml-auto min-h-11 px-6 sm:ml-0">
           {saving ? "Saving…" : isNew ? "Save plan" : "Save changes"}
         </button>
       </form>
@@ -295,7 +295,7 @@ function PlanView({ plan, onChange }: { plan: Plan; onChange: (plan: Plan) => vo
 
   return (
     <div className="mt-6 space-y-8">
-      <div className="grid gap-5 md:grid-cols-[2fr_3fr]">
+      <div className="grid gap-5 lg:grid-cols-[2fr_3fr]">
         <Prediction plan={plan} />
         <RecentStats plan={plan} />
       </div>
@@ -315,19 +315,21 @@ function PlanView({ plan, onChange }: { plan: Plan; onChange: (plan: Plan) => vo
 function Prediction({ plan }: { plan: Plan }) {
   const saved = plan.predicted_time_s - plan.projected_time_s;
   return (
-    <div className="flex flex-col justify-center gap-5 rounded-card border border-accent/30 bg-accent/[0.08] p-5 sm:p-7">
+    <div className="flex min-w-0 flex-col justify-center gap-5 rounded-card border border-accent/30 bg-accent/[0.08] p-4 sm:p-7">
       <p className="eyebrow">
         {plan.race_label} · {formatPlanDate(plan.race_date)}
       </p>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="min-w-0">
           <p className="text-[13px] text-ink-muted">If you raced today</p>
-          <p className="stat-number mt-2 text-3xl sm:text-[2.25rem]">{formatDuration(plan.predicted_time_s)}</p>
+          <p className="stat-number mt-2 text-[1.625rem] min-[380px]:text-3xl sm:text-[2.25rem]">
+            {formatDuration(plan.predicted_time_s)}
+          </p>
           <p className="mt-1.5 text-sm tabular-nums text-ink-muted">{formatPace(plan.predicted_pace_s_per_mi)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-[13px] font-semibold text-accent">After the plan</p>
-          <p className="stat-number mt-2 text-3xl text-accent sm:text-[2.25rem]">
+          <p className="stat-number mt-2 text-[1.625rem] text-accent min-[380px]:text-3xl sm:text-[2.25rem]">
             {formatDuration(plan.projected_time_s)}
           </p>
           <p className="mt-1.5 text-sm tabular-nums text-ink-muted">{formatPace(plan.projected_pace_s_per_mi)}</p>
@@ -355,7 +357,7 @@ function RecentStats({ plan }: { plan: Plan }) {
     ["Runs analyzed", String(r.run_count)],
   ];
   return (
-    <div className="card p-5 sm:p-6">
+    <div className="card min-w-0 p-4 sm:p-6">
       <p className="eyebrow">
         Your last {r.days_covered} days{r.stale ? " (older runs)" : ""}
       </p>
@@ -536,19 +538,24 @@ function WeekCard({
 
 function WorkoutRow({ workout, onEdit }: { workout: Workout; onEdit: () => void }) {
   return (
-    // On phones the date sits above the workout; from sm up it gets its own column.
-    <li className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 px-4 py-3.5 text-sm sm:grid-cols-[6.5rem_1fr_auto_auto] sm:px-6">
-      <span className="col-span-3 text-xs font-medium text-ink-faint sm:col-span-1 sm:pt-0.5 sm:text-sm">
+    // On phones the date sits above the workout and the distance and pace go under the title, so the
+    // description gets the full width; from sm up each gets its own column.
+    <li className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-4 py-3.5 text-sm sm:grid-cols-[6.5rem_1fr_auto_auto] sm:px-6">
+      <span className="col-span-2 text-xs font-medium text-ink-faint sm:col-span-1 sm:pt-0.5 sm:text-sm">
         {formatPlanDate(workout.date)}
       </span>
       <div className="min-w-0">
-        <p className="flex items-center gap-2 font-semibold">
+        <p className="flex items-center gap-2 font-semibold [overflow-wrap:anywhere]">
           <span className={`h-2 w-2 shrink-0 rounded-full ${KIND_COLORS[workout.kind]}`} />
           {workout.title}
         </p>
-        <p className="mt-0.5 text-ink-muted">{workout.description}</p>
+        <p className="mt-0.5 text-xs tabular-nums sm:hidden">
+          <span className="font-semibold">{workout.distance_mi.toFixed(1)} mi</span>
+          <span className="text-ink-faint"> · {formatPaceRange(workout.fast_s_per_mi, workout.slow_s_per_mi)}</span>
+        </p>
+        <p className="mt-1 text-ink-muted [overflow-wrap:anywhere] sm:mt-0.5">{workout.description}</p>
       </div>
-      <div className="text-right tabular-nums">
+      <div className="hidden text-right tabular-nums sm:block">
         <p className="font-semibold">{workout.distance_mi.toFixed(1)} mi</p>
         <p className="text-xs whitespace-nowrap text-ink-faint">
           {formatPaceRange(workout.fast_s_per_mi, workout.slow_s_per_mi)}
@@ -608,7 +615,7 @@ function WorkoutEditor({
             min={minDate}
             max={maxDate}
             onChange={(e) => e.target.value && set({ date: e.target.value })}
-            className={input}
+            className={`${input} w-full min-w-0`}
           />
         </label>
         <label className="flex flex-col gap-1">

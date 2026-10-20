@@ -69,7 +69,7 @@ function ActivityHeading({ label, noun, activity, highlight = false }: ActivityH
   return (
     <div className={`min-w-0 px-4 py-5 sm:px-6 ${highlight ? "border-l border-line" : ""}`}>
       <p className={`eyebrow ${highlight ? "text-accent" : ""}`}>{label}</p>
-      <p className="mt-1.5 truncate text-lg font-extrabold [font-stretch:108%] sm:text-xl">{activity.name ?? capitalize(noun)}</p>
+      <p className="mt-1.5 text-lg leading-snug font-extrabold [overflow-wrap:anywhere] [font-stretch:108%] sm:truncate sm:text-xl">{activity.name ?? capitalize(noun)}</p>
       <p className="text-sm text-ink-muted">{formatDate(activity.start_time_local)}</p>
     </div>
   );
@@ -77,8 +77,44 @@ function ActivityHeading({ label, noun, activity, highlight = false }: ActivityH
 
 function MetricTable({ config, metrics }: { config: SportConfig; metrics: MetricComparison[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[30rem] text-[15px] tabular-nums">
+    <>
+      {/* Phones: one stacked row per metric, so nothing has to scroll sideways. */}
+      <dl className="divide-y divide-line text-[15px] tabular-nums sm:hidden">
+        {metrics.map((m) => (
+          <div key={m.key} className="px-4 py-3">
+            <dt className="font-semibold">{m.label}</dt>
+            <dd className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3">
+              <MetricValue label="Earlier" className="text-ink-muted">
+                {formatMetric(config, m, m.earlier)}
+              </MetricValue>
+              <MetricValue label="Later" className="font-bold">
+                {formatMetric(config, m, m.later)}
+              </MetricValue>
+              <MetricValue label="Change" className="text-right">
+                <ChangeChip config={config} metric={m} />
+              </MetricValue>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <MetricGrid config={config} metrics={metrics} />
+    </>
+  );
+}
+
+function MetricValue({ label, className, children }: { label: string; className: string; children: React.ReactNode }) {
+  return (
+    <div className={`min-w-0 [overflow-wrap:anywhere] ${className}`}>
+      <p className="eyebrow mb-1 text-[10px]">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function MetricGrid({ config, metrics }: { config: SportConfig; metrics: MetricComparison[] }) {
+  return (
+    <div className="hidden sm:block">
+      <table className="w-full text-[15px] tabular-nums">
         <thead className="text-left text-xs font-bold tracking-wider text-ink-faint uppercase">
           <tr>
             <th className="px-4 py-3.5 font-bold sm:px-6">Metric</th>

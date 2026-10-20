@@ -33,7 +33,12 @@ export function ActivityTrends({ config }: { config: SportConfig }) {
           </h2>
           <p className="mt-1 text-ink-muted">One dot per {config.noun}.</p>
         </div>
-        <div role="group" aria-label="Time range" className="flex flex-wrap gap-0.5 rounded-full bg-surface p-1 ring-1 ring-line">
+        {/* Spans the full width on phones, with the six options sharing it evenly. */}
+        <div
+          role="group"
+          aria-label="Time range"
+          className="flex w-full gap-0.5 rounded-full bg-surface p-1 ring-1 ring-line sm:w-auto"
+        >
           {RANGES.map((r) => {
             const picked = r.value === range;
             return (
@@ -44,7 +49,7 @@ export function ActivityTrends({ config }: { config: SportConfig }) {
                 aria-pressed={picked}
                 aria-label={r.label}
                 title={r.label}
-                className={`min-h-9 rounded-full px-3.5 text-[13px] font-bold transition-colors ${
+                className={`min-h-9 flex-1 rounded-full px-2 text-[13px] font-bold transition-colors sm:flex-none sm:px-3.5 ${
                   picked ? "bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]" : "text-ink-muted hover:text-ink"
                 }`}
               >
@@ -147,7 +152,7 @@ function ChartCard({ title, note, legend, children }: ChartCardProps) {
         <h3 className="font-bold">{title}</h3>
         {note && <p className="text-xs text-ink-faint">{note}</p>}
         {legend && (
-          <ul className="flex gap-4 text-xs text-ink-muted">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
             {legend.map((s) => (
               <li key={s.label} className="flex items-center gap-1.5">
                 <span className="h-[3px] w-3.5 rounded-full" style={{ backgroundColor: s.color }} />

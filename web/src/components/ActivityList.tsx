@@ -50,12 +50,12 @@ export function ActivityList({ config, selectedIds, onToggle }: ActivityListProp
                 <th className="w-10 py-3.5 pr-1 pl-4 sm:pl-6">
                   <span className="sr-only">Compare</span>
                 </th>
-                <th className="px-3 py-3.5 font-bold">{capitalize(config.noun)}</th>
-                <th className="px-3 py-3.5 text-right font-bold">Distance</th>
-                <th className="py-3.5 pr-1 pl-3 text-right font-bold sm:px-3">Time</th>
+                <th className="px-2 py-3.5 sm:px-3 font-bold">{capitalize(config.noun)}</th>
+                <th className="py-3.5 pr-1 pl-2 sm:px-3 text-right font-bold">Distance</th>
+                <th className="hidden px-3 py-3.5 text-right font-bold sm:table-cell">Time</th>
                 <th className="hidden px-3 py-3.5 text-right font-bold md:table-cell">{config.speed.label}</th>
                 <th className="hidden px-3 py-3.5 text-right font-bold md:table-cell">Avg HR</th>
-                <th className="w-14 py-3.5 pr-3 pl-1 sm:pr-5">
+                <th className="w-12 py-3.5 pr-2 pl-1 sm:w-14 sm:pr-5">
                   <span className="sr-only">Details</span>
                 </th>
               </tr>
@@ -101,6 +101,7 @@ function ActivityRow({ config, activity, selected, onToggle }: ActivityRowProps)
   const [expanded, setExpanded] = useState(false);
   const name = activity.name ?? capitalize(config.noun);
   const date = formatDate(activity.start_time_local);
+  const time = formatDuration(activity.moving_time_s ?? activity.duration_s);
 
   return (
     <>
@@ -116,21 +117,23 @@ function ActivityRow({ config, activity, selected, onToggle }: ActivityRowProps)
             className="h-[18px] w-[18px] cursor-pointer"
           />
         </td>
-        <td className="px-3 py-3.5">
+        <td className="px-2 py-3.5 sm:px-3 [overflow-wrap:anywhere]">
           <p className="font-bold">{name}</p>
           <p className="mt-0.5 text-[13px] text-ink-faint">{date}</p>
         </td>
-        <td className="px-3 py-3.5 text-right font-bold whitespace-nowrap">{formatDistance(config, activity.distance_mi)}</td>
-        <td className="py-3.5 pr-1 pl-3 text-right whitespace-nowrap text-ink-muted sm:px-3">
-          {formatDuration(activity.moving_time_s ?? activity.duration_s)}
+        {/* On phones the time sits under the distance, leaving the name column room. */}
+        <td className="py-3.5 pr-1 pl-2 sm:px-3 text-right whitespace-nowrap">
+          <p className="font-bold">{formatDistance(config, activity.distance_mi)}</p>
+          <p className="mt-0.5 text-[13px] text-ink-muted sm:hidden">{time}</p>
         </td>
+        <td className="hidden px-3 py-3.5 text-right whitespace-nowrap text-ink-muted sm:table-cell">{time}</td>
         <td className="hidden px-3 py-3.5 text-right whitespace-nowrap text-ink-muted md:table-cell">
           {formatSpeed(config, activity.avg_pace_s_per_mi)}
         </td>
         <td className="hidden px-3 py-3.5 text-right whitespace-nowrap text-ink-muted md:table-cell">
           {formatNumber(activity.avg_hr, 0)}
         </td>
-        <td className="py-1.5 pr-3 pl-1 text-right sm:pr-5">
+        <td className="py-1.5 pr-2 pl-1 text-right sm:pr-5">
           <button
             type="button"
             onClick={() => setExpanded((open) => !open)}
@@ -180,8 +183,8 @@ function ActivityDetails({ id, noun }: { id: number; noun: string }) {
           <dl className="mt-2.5 space-y-1.5 text-sm">
             {section.items.map((item) => (
               <div key={item.key} className="flex justify-between gap-4">
-                <dt className="text-ink-muted">{item.label}</dt>
-                <dd className="text-right font-semibold">{item.display}</dd>
+                <dt className="min-w-0 text-ink-muted">{item.label}</dt>
+                <dd className="min-w-0 text-right font-semibold [overflow-wrap:anywhere]">{item.display}</dd>
               </div>
             ))}
           </dl>
