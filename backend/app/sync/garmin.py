@@ -47,7 +47,13 @@ class GarminConnectSource:
         return page if isinstance(page, list) else []
 
 
+def _inline_tokens(settings: Settings) -> str | None:
+    return settings.garmin_tokens.get_secret_value() if settings.garmin_tokens else None
+
+
 def has_saved_tokens(settings: Settings) -> bool:
+    if _inline_tokens(settings):
+        return True
     return (Path(settings.garmin_token_dir) / "garmin_tokens.json").exists()
 
 
@@ -77,9 +83,12 @@ def connect(settings: Settings, *, interactive: bool = False) -> GarminConnectSo
         _password(settings) or None,
         prompt_mfa=(lambda: input("Garmin MFA code: ").strip()) if interactive else None,
     )
-    Path(settings.garmin_token_dir).mkdir(parents=True, exist_ok=True)
+    tokenstore = _inline_tokens(settings)
+    if tokenstore is None:
+        Path(settings.garmin_token_dir).mkdir(parents=True, exist_ok=True)
+        tokenstore = settings.garmin_token_dir
     try:
-        client.login(settings.garmin_token_dir)
+        client.login(tokenstore)
     except GarminConnectAuthenticationError as e:
         if "MFA" in str(e):
             raise GarminError(
