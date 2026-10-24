@@ -19,6 +19,19 @@ class Settings(BaseSettings):
     garmin_email: str | None = None
     garmin_password: SecretStr | None = None
     garmin_token_dir: str = "./data/garmin_tokens"
+    # The contents of garmin_tokens.json, for hosts with no writable disk (Vercel).
+    # When set it is used instead of garmin_token_dir.
+    garmin_tokens: SecretStr | None = None
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, value: str) -> str:
+        # Hosted Postgres (Neon, Supabase, ...) hands out postgres:// URLs; SQLAlchemy needs
+        # the driver named.
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value.removeprefix(prefix)
+        return value
 
     @field_validator("cors_origins", mode="before")
     @classmethod

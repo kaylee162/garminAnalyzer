@@ -6,7 +6,9 @@ from app.config import get_settings
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Garmin Analyzer API", version="0.1.0")
+    # On Vercel the API is served under /api. With root_path set, routes answer both with and
+    # without the prefix, so local dev on http://localhost:8000/health keeps working.
+    app = FastAPI(title="Garmin Analyzer API", version="0.1.0", root_path="/api")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=get_settings().cors_origins,
