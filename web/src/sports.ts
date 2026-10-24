@@ -8,6 +8,11 @@ const SECONDS_PER_HOUR = 3600;
 
 export type SportConfig = {
   sport: Sport;
+  // The sport's page title and nav label, e.g. "Running".
+  title: string;
+  href: string;
+  // The sport's hue in charts, e.g. "var(--color-sport-run)".
+  color: string;
   // Used in copy: "Recent runs", "Tick two rides to compare them".
   noun: string;
   nounPlural: string;
@@ -45,6 +50,9 @@ const miles: SportConfig["distance"] = { unit: "mi", fromMiles: (mi) => mi, digi
 export const SPORTS: Record<Sport, SportConfig> = {
   run: {
     sport: "run",
+    title: "Running",
+    href: "#/running",
+    color: "var(--color-sport-run)",
     noun: "run",
     nounPlural: "runs",
     speed: minutesPerMile,
@@ -53,6 +61,9 @@ export const SPORTS: Record<Sport, SportConfig> = {
   },
   walk: {
     sport: "walk",
+    title: "Walking",
+    href: "#/walking",
+    color: "var(--color-sport-walk)",
     noun: "walk",
     nounPlural: "walks",
     speed: minutesPerMile,
@@ -61,6 +72,9 @@ export const SPORTS: Record<Sport, SportConfig> = {
   },
   bike: {
     sport: "bike",
+    title: "Biking",
+    href: "#/biking",
+    color: "var(--color-sport-bike)",
     noun: "ride",
     nounPlural: "rides",
     speed: {
@@ -76,6 +90,9 @@ export const SPORTS: Record<Sport, SportConfig> = {
   },
   swim: {
     sport: "swim",
+    title: "Swimming",
+    href: "#/swimming",
+    color: "var(--color-sport-swim)",
     noun: "swim",
     nounPlural: "swims",
     speed: {
@@ -104,4 +121,16 @@ export function formatDistance(config: SportConfig, miles: number | null | undef
 
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** The API's catch-all group (strength, yoga, …). It shows on the dashboard but has no page. */
+export const OTHER_SPORT = { title: "Other", color: "var(--color-sport-other)" };
+
+export function isSport(sport: string): sport is Sport {
+  return sport in SPORTS;
+}
+
+/** The title and chart hue of any sport group the API sends, "other" included. */
+export function sportLook(sport: string): { title: string; color: string } {
+  return isSport(sport) ? SPORTS[sport] : OTHER_SPORT;
 }

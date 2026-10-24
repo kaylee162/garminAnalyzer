@@ -1,9 +1,11 @@
 import { useEffect, useState, useSyncExternalStore, type ComponentType } from "react";
 import { useHealth } from "./api/health";
 import { BikingPage } from "./pages/biking/BikingPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { RunningPage } from "./pages/running/RunningPage";
 import { SwimmingPage } from "./pages/swimming/SwimmingPage";
 import { WalkingPage } from "./pages/walking/WalkingPage";
+import { SPORTS } from "./sports";
 
 type Route = {
   hash: string;
@@ -13,10 +15,11 @@ type Route = {
 
 // The first route is the home page, shown when the URL has no matching hash.
 const ROUTES: Route[] = [
-  { hash: "#/running", label: "Running", Page: RunningPage },
-  { hash: "#/walking", label: "Walking", Page: WalkingPage },
-  { hash: "#/biking", label: "Biking", Page: BikingPage },
-  { hash: "#/swimming", label: "Swimming", Page: SwimmingPage },
+  { hash: "#/dashboard", label: "Dashboard", Page: DashboardPage },
+  { hash: SPORTS.run.href, label: SPORTS.run.title, Page: RunningPage },
+  { hash: SPORTS.walk.href, label: SPORTS.walk.title, Page: WalkingPage },
+  { hash: SPORTS.bike.href, label: SPORTS.bike.title, Page: BikingPage },
+  { hash: SPORTS.swim.href, label: SPORTS.swim.title, Page: SwimmingPage },
 ];
 
 export function App() {
@@ -73,7 +76,7 @@ function Header({ current }: { current: Route }) {
             Garmin Analyzer
           </span>
         </a>
-        <nav aria-label="Sports" className="ml-auto hidden items-center gap-0.5 text-sm sm:flex">
+        <nav aria-label="Pages" className="ml-auto hidden items-center gap-0.5 text-sm sm:flex">
           {ROUTES.map((route) => {
             const active = route === current;
             return (
@@ -102,7 +105,7 @@ function Header({ current }: { current: Route }) {
         </button>
       </div>
       {menuOpen && (
-        <nav id="mobile-nav" aria-label="Sports" className="border-t border-line px-4 pt-2 pb-4 sm:hidden">
+        <nav id="mobile-nav" aria-label="Pages" className="border-t border-line px-4 pt-2 pb-4 sm:hidden">
           <ul className="flex flex-col gap-1">
             {ROUTES.map((route) => {
               const active = route === current;

@@ -41,7 +41,7 @@ npm install
 npm run dev:web
 ```
 
-The home page shows whether the web app can reach the API and database, a **Sync now** button, and your recent runs.
+The home page is a dashboard across every sport: all-time totals (activities, time, distance, elevation, calories, active days), this week against last week, this year, your daily streak, time and distance per sport, a 12-week chart of training time stacked by sport, and your latest activities. Each sport (running, walking, biking, swimming) has its own page with averages, progress charts, the full activity list and a side-by-side comparison. The dashboard's math is in `backend/app/analytics/dashboard.py`.
 
 The **Training plan** section takes a race (5K to marathon) and a date, estimates your race time today from your best recent effort (Jack Daniels' VDOT formula), and lays out the weeks until race day with a pace for every run. The math is in `backend/app/analytics/planner.py`. Every run in the plan can be edited (date, distance, type, pace, notes), removed, or added to, and **Save plan** at the bottom stores it in the database. Saved plans are listed above the form; click **Open** to bring one back up.
 

@@ -38,3 +38,16 @@ export function formatPercent(percent: number | null | undefined): string {
   const sign = percent > 0 ? "+" : percent < 0 ? "−" : "";
   return `${sign}${Math.abs(percent).toFixed(1)}%`;
 }
+
+/** A long stretch of time as hours and minutes, e.g. "124h 05m" or "45m". */
+export function formatTotalTime(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h.toLocaleString()}h ${String(m).padStart(2, "0")}m` : `${m}m`;
+}
+
+/** A count or total with thousands separators, e.g. "12,480". */
+export function formatCount(value: number, digits = 0): string {
+  return value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
