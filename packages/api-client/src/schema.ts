@@ -132,6 +132,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dashboard
+         * @description A synopsis of every synced activity: totals, per sport, this week, streaks, weekly volume.
+         */
+        get: operations["getDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sync/status": {
         parameters: {
             query?: never;
@@ -328,6 +348,24 @@ export interface components {
             anaerobic_te: number | null;
             /** Calories */
             calories: number | null;
+        };
+        /** Dashboard */
+        Dashboard: {
+            totals: components["schemas"]["Totals"];
+            /** Active Days */
+            active_days: number;
+            /** First Activity At */
+            first_activity_at: string | null;
+            /** Sports */
+            sports: components["schemas"]["SportTotals"][];
+            this_week: components["schemas"]["Totals"];
+            last_week: components["schemas"]["Totals"];
+            this_year: components["schemas"]["Totals"];
+            streak: components["schemas"]["Streak"];
+            /** Weekly */
+            weekly: components["schemas"]["WeekVolume"][];
+            /** Recent */
+            recent: components["schemas"]["ActivitySummary"][];
         };
         /** DetailItem */
         DetailItem: {
@@ -537,6 +575,34 @@ export interface components {
              */
             updated_at: string;
         };
+        /** SportTotals */
+        SportTotals: {
+            /** Count */
+            count: number;
+            /** Time S */
+            time_s: number;
+            /** Distance Mi */
+            distance_mi: number;
+            /** Elevation Gain Ft */
+            elevation_gain_ft: number;
+            /** Calories */
+            calories: number;
+            /** Sport */
+            sport: string;
+            /** Longest Distance Mi */
+            longest_distance_mi: number | null;
+            /** Longest Time S */
+            longest_time_s: number | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
+        };
+        /** Streak */
+        Streak: {
+            /** Current Days */
+            current_days: number;
+            /** Longest Days */
+            longest_days: number;
+        };
         /** SyncResultOut */
         SyncResultOut: {
             /** Added */
@@ -556,6 +622,19 @@ export interface components {
             last_sync_at: string | null;
             /** Activity Count */
             activity_count: number;
+        };
+        /** Totals */
+        Totals: {
+            /** Count */
+            count: number;
+            /** Time S */
+            time_s: number;
+            /** Distance Mi */
+            distance_mi: number;
+            /** Elevation Gain Ft */
+            elevation_gain_ft: number;
+            /** Calories */
+            calories: number;
         };
         /** TrainingPlan */
         TrainingPlan: {
@@ -629,6 +708,18 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WeekVolume */
+        WeekVolume: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Time S By Sport */
+            time_s_by_sport: {
+                [key: string]: number;
+            };
         };
         /** Workout */
         Workout: {
@@ -873,6 +964,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
                 };
             };
         };

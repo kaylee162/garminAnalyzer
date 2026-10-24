@@ -363,6 +363,28 @@
         }
       }
     },
+    "/dashboard": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Get Dashboard",
+        "description": "A synopsis of every synced activity: totals, per sport, this week, streaks, weekly volume.",
+        "operationId": "getDashboard",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sync/status": {
       "get": {
         "tags": [
@@ -1000,6 +1022,76 @@
         ],
         "title": "ActivitySummary"
       },
+      "Dashboard": {
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "active_days": {
+            "type": "integer",
+            "title": "Active Days"
+          },
+          "first_activity_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Activity At"
+          },
+          "sports": {
+            "items": {
+              "$ref": "#/components/schemas/SportTotals"
+            },
+            "type": "array",
+            "title": "Sports"
+          },
+          "this_week": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "last_week": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "this_year": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "streak": {
+            "$ref": "#/components/schemas/Streak"
+          },
+          "weekly": {
+            "items": {
+              "$ref": "#/components/schemas/WeekVolume"
+            },
+            "type": "array",
+            "title": "Weekly"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            },
+            "type": "array",
+            "title": "Recent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totals",
+          "active_days",
+          "first_activity_at",
+          "sports",
+          "this_week",
+          "last_week",
+          "this_year",
+          "streak",
+          "weekly",
+          "recent"
+        ],
+        "title": "Dashboard"
+      },
       "DetailItem": {
         "properties": {
           "key": {
@@ -1560,6 +1652,99 @@
         ],
         "title": "SavedPlanSummary"
       },
+      "SportTotals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "distance_mi": {
+            "type": "number",
+            "title": "Distance Mi"
+          },
+          "elevation_gain_ft": {
+            "type": "number",
+            "title": "Elevation Gain Ft"
+          },
+          "calories": {
+            "type": "integer",
+            "title": "Calories"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "longest_distance_mi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longest Distance Mi"
+          },
+          "longest_time_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longest Time S"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "time_s",
+          "distance_mi",
+          "elevation_gain_ft",
+          "calories",
+          "sport",
+          "longest_distance_mi",
+          "longest_time_s",
+          "last_activity_at"
+        ],
+        "title": "SportTotals"
+      },
+      "Streak": {
+        "properties": {
+          "current_days": {
+            "type": "integer",
+            "title": "Current Days"
+          },
+          "longest_days": {
+            "type": "integer",
+            "title": "Longest Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_days",
+          "longest_days"
+        ],
+        "title": "Streak"
+      },
       "SyncResultOut": {
         "properties": {
           "added": {
@@ -1625,6 +1810,39 @@
           "activity_count"
         ],
         "title": "SyncStatus"
+      },
+      "Totals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "distance_mi": {
+            "type": "number",
+            "title": "Distance Mi"
+          },
+          "elevation_gain_ft": {
+            "type": "number",
+            "title": "Elevation Gain Ft"
+          },
+          "calories": {
+            "type": "integer",
+            "title": "Calories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "time_s",
+          "distance_mi",
+          "elevation_gain_ft",
+          "calories"
+        ],
+        "title": "Totals"
       },
       "TrainingPlan": {
         "properties": {
@@ -1843,6 +2061,28 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeekVolume": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start"
+          },
+          "time_s_by_sport": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Time S By Sport"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "time_s_by_sport"
+        ],
+        "title": "WeekVolume"
       },
       "Workout": {
         "properties": {

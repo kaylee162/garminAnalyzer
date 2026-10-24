@@ -33,6 +33,14 @@
   --color-metric-distance: #d9dcd6;
   --color-metric-time: #f08fc0;
 
+  /* One hue per sport for the dashboard's charts, stepped darker than the metric hues so the
+     four stay apart under color blindness (checked with a CVD validator against the surface). */
+  --color-sport-run: #e8692e;
+  --color-sport-walk: #2a9d8c;
+  --color-sport-bike: #4f86f7;
+  --color-sport-swim: #c96aa0;
+  --color-sport-other: #6b706a;
+
   /* The heart rate chart's two lines: same hue, far apart in lightness, so the pair stays easy
      to tell apart, colorblind or not. */
   --color-chart-avg-hr: #4f86f7;

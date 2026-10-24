@@ -32,7 +32,7 @@ export function OverallStats({ config }: { config: SportConfig }) {
   );
 }
 
-type StatCardProps = {
+export type StatCardProps = {
   title: string;
   // Undefined while loading.
   value: string | undefined;
@@ -40,7 +40,7 @@ type StatCardProps = {
   swatch?: string;
 };
 
-function StatCard({ title, value, unit, swatch }: StatCardProps) {
+export function StatCard({ title, value, unit, swatch }: StatCardProps) {
   const missing = value === undefined || value === "–";
   return (
     <div className="min-w-0 bg-surface px-4 py-5 sm:px-6 sm:py-6">

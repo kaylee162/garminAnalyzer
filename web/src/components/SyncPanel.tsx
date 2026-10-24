@@ -1,7 +1,12 @@
 import { useSyncNow, useSyncStatus } from "../api/activities";
 import { formatDateTime } from "../format";
 
-export function SyncPanel() {
+type SyncPanelProps = {
+  // Show the Sync now button. Only the dashboard syncs; sport pages just say when the last sync was.
+  canSync?: boolean;
+};
+
+export function SyncPanel({ canSync = false }: SyncPanelProps) {
   const { data: status } = useSyncStatus();
   const sync = useSyncNow();
 
@@ -33,15 +38,17 @@ export function SyncPanel() {
         )}
         {sync.isError && <p className="mt-2 text-sm font-semibold text-bad">{sync.error.message}</p>}
       </div>
-      <button
-        type="button"
-        onClick={() => sync.mutate()}
-        disabled={sync.isPending}
-        className="btn btn-primary min-h-11 w-full px-5 sm:w-auto"
-      >
-        <SyncIcon spinning={sync.isPending} />
-        {sync.isPending ? "Syncing…" : "Sync now"}
-      </button>
+      {canSync && (
+        <button
+          type="button"
+          onClick={() => sync.mutate()}
+          disabled={sync.isPending}
+          className="btn btn-primary min-h-11 w-full px-5 sm:w-auto"
+        >
+          <SyncIcon spinning={sync.isPending} />
+          {sync.isPending ? "Syncing…" : "Sync now"}
+        </button>
+      )}
     </section>
   );
 }
